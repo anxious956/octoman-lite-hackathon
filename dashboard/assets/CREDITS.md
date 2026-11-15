@@ -50,13 +50,15 @@ Used in the architecture diagram under "Technical details", from the official
 [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) set. AWS states
 that customers and partners may use these icons to create architecture diagrams; they
 are used here unmodified (no recolouring, cropping or stretching), only scaled down to
-96 px PNG from the copies in `docs/aws-icons/`. The icons belong to Amazon Web Services
+96 px PNG. Five come from the copies in `docs/aws-icons/`; the S3 icon was supplied
+separately as a PNG from the AWS Architecture Icons set. No package version is claimed
+for either. The icons belong to Amazon Web Services
 and are not covered by this repository's licence.
 
 | File | Icon |
 |---|---|
 | `img/aws/cloudfront.png` | Amazon CloudFront, service icon |
-| `img/aws/s3.png` | Amazon S3, resource icon (S3 bucket) |
+| `img/aws/s3.png` | Amazon S3, service icon |
 | `img/aws/api-gateway.png` | Amazon API Gateway, service icon |
 | `img/aws/lambda.png` | AWS Lambda, service icon |
 | `img/aws/step-functions.png` | AWS Step Functions, service icon |

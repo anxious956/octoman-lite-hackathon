@@ -27,11 +27,11 @@ marketplaces' APIs, live Amazon calls.
 
 ## Deploying
 
-Deploy into a dedicated, non-production account (`--profile <your-profile>`),
-sign in first and confirm the account with `aws sts get-caller-identity`. The
-plan is to leave the stack running until the winners are announced, with a $5
-monthly AWS Budgets alert in that account (README, "If you leave it running"),
-and to run `sam delete` afterwards.
+Advice for anyone deploying this: use a dedicated, non-production account
+(`--profile <your-profile>`), sign in first and confirm the account with
+`aws sts get-caller-identity`. The plan is to leave the stack running until the
+winners are announced, with a $5 monthly AWS Budgets alert (README, "If you
+leave it running"), and to run `sam delete` afterwards.
 
 ## After a deploy that changes seed data
 
@@ -48,11 +48,11 @@ Press **Restock the demo** on the dashboard once.
   added, ConvertToUSD (success; function error and timeout both caught with the
   `fallback_error` fx and routed to PushToMarketplaces; FinalizeOrder accepts that
   fx). Nothing was invoked or created.
-- Deployed stack (a dedicated non-production account): a sale in Germany was
-  converted to dollars at the ECB rate and all four stores were handled; the
-  last-item race gave one sale and one block; an order for more than the stock
-  was blocked; a low-stock warning was raised; the dashboard was served through
-  CloudFront with its config written by the custom resource.
+- Deployed stack: a sale in Germany was converted to dollars at the ECB rate
+  and all four stores were handled; the last-item race gave one sale and one
+  block; an order for more than the stock was blocked; a low-stock warning was
+  raised; the dashboard was served through CloudFront with its config written by
+  the custom resource.
 - Not verified yet: `sam local invoke` (Docker was not running during the
   build), and the phone layout on the deployed site (only checked locally at
   390 px against a fake API).
