@@ -394,7 +394,14 @@ section, .hero, .how { min-width: 0; }
 .how__chev { margin-left: auto; align-self: center; transition: transform 200ms ease; }
 .how[open] .how__chev { transform: rotate(180deg); }
 .how__body { padding: 0 var(--s5) var(--s5); border-top: 1px solid var(--rule); }
-.arch { width: 100%; height: auto; margin: var(--s4) 0; }
+.arch-scroll { overflow-x: auto; margin: var(--s4) 0; }
+.arch { display: block; width: 100%; height: auto; }
+.arch-hint { display: none; margin: var(--s4) 0 0; }
+@media (max-width: 719px) {
+  .arch { min-width: 680px; }
+  .arch-hint { display: block; }
+  .arch-scroll { margin-top: var(--s2); }
+}
 .arch__box rect { fill: var(--sunken); stroke: var(--rule-strong); stroke-width: 1; }
 .arch__box--wide rect { fill: none; stroke-dasharray: 4 4; }
 .arch text { fill: var(--ink); font: 500 14px var(--sans); text-anchor: middle; }
