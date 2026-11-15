@@ -1,22 +1,107 @@
 <!--
 NOTE FOR THE AUTHOR (delete this block before posting):
-- Check the title prefix, required tags and any minimum length against the
-  challenge page before posting; they were not confirmed when this was drafted.
+- Deadline: November 16, 2026, 1:00 PM PST.
+- Submit in the challenge's "Your project" tab. Paste PART 1 as the project
+  description. Put the public video link (under 3 minutes, showing the build
+  running end to end) in the "demo" field, and the live dashboard / repo links
+  where the form asks for them.
+- The Rules tab was not checked (eligibility, team and AI-use terms). Read it
+  before submitting, and keep or delete the optional AI-assistant line to match.
 - Replace <LIVE_DEMO_URL> and <VIDEO_URL>.
-- The last line of "Try it" (AI assistant disclosure) is optional: keep or delete.
-- Article body is about 880 words (between the title and the form-field blurbs).
+- PART 2 (the longer article) is optional, e.g. for a Builder Center post; check
+  any title prefix, tags and minimum length there before posting it.
 -->
 
-# Weekend Challenge: OctoMan Lite, one shelf of stock on four Amazon stores without overselling
+# PART 1: Project description (paste into "Your project")
 
-## The problem
+## OctoMan Lite: one shelf of stock on four Amazon stores, without overselling
+
+### The problem I picked and what the build does
+
+When a seller lists the same product on several marketplaces, each one keeps
+its own stock count, so two customers in two countries can buy the last unit in
+the same second and one order has to be cancelled. OctoMan Lite keeps one shared
+stock level (the "shelf") for four Amazon stores (US, UK, Germany, Türkiye) and
+checks it in one atomic step before any sale, so the last unit can only be sold
+once. A live dashboard shows the shelf, the four stores, every order and where
+it was stopped if it was blocked.
+
+### The serverless AWS services and how they connect
+
+An HTTP API (Amazon API Gateway) sends each order to an AWS Lambda function that
+starts an AWS Step Functions workflow named after the order. One conditional
+Amazon DynamoDB transaction reserves the stock or blocks the order; a Lambda
+converts the price to US dollars with ECB rates; a Parallel state updates the
+four stores at once; a low-stock warning is written straight to DynamoDB; and a
+Lambda saves a receipt to Amazon S3. The dashboard is a static site in a private
+S3 bucket behind Amazon CloudFront. The architecture diagram is attached
+(`docs/architecture.png`).
+
+### No servers, no deployment pipeline
+
+Every part is a managed serverless service: no instances, no containers, no
+CI/CD. The whole system is one AWS SAM template, deployed with `sam build` and
+`sam deploy`. A CloudFormation custom resource publishes the dashboard during
+the deploy, so there is no separate upload step. It scales to zero: an idle
+stack costs only a few kilobytes of storage, and one order costs about $0.0003.
+
+### Why it stands out
+
+- **Technical innovation and originality:** overselling is prevented by a single
+  conditional DynamoDB transaction ("enough left?" and "take it off the shelf"
+  happen together), so two stores racing for the last unit cannot both win. A
+  version number on every stock change stops a late store update from
+  overwriting newer stock, even right after the demo is restocked.
+- **Craft and execution:** verified on the deployed stack: a Germany order for
+  one mug at €11.99 was converted to $13.25 at the ECB rate and all four stores
+  were updated; two stores ordering the last print at once gave one sale and one
+  block; 5 keychains ordered with 3 in stock were blocked. 165 automated tests
+  run without an AWS account, every function has its own least-privilege IAM
+  policy, and "Restock the demo" puts every product back so the demo never stays
+  sold out.
+- **Usefulness and impact:** every oversold order is a cancellation that costs
+  the seller money and marketplace rating. The same pattern (one atomic check
+  and decrement, then fan out) applies to any shared stock, seat or quota.
+- **Creativity and storytelling:** the page is built around one picture, one
+  shelf and four stores, and four short demo stories: a customer buys one,
+  stock runs low, two customers want the last item, someone orders more than
+  we have.
+
+### Scope
+
+One flow, end to end: an order comes in, stock is reserved or the order is
+blocked, the price is converted, all four stores are updated, a warning is
+raised if stock is low, and a receipt is saved. Marketplace calls are mock: the
+real Amazon Selling Partner API request is built and shown, but never sent, and
+all products and orders are synthetic demo data. There is no connection to or
+endorsement by Amazon.
+
+### About this project
+
+OctoMan Lite was built for this challenge during the challenge weekend, as a
+standalone, scaled-down take on my own private OctoMan inventory system; a few
+modules (currency conversion, the marketplace adapter interface, the DynamoDB
+helpers) were adapted from it.
+
+- Live demo: <LIVE_DEMO_URL>
+- Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
+- Video: <VIDEO_URL>
+- *Optional:* I built this with the help of an AI coding assistant.
+
+---
+
+# PART 2: Longer article (optional)
+
+## Weekend Challenge: OctoMan Lite, one shelf of stock on four Amazon stores without overselling
+
+### The problem
 
 If you sell the same product in several online stores, each store keeps its own
 idea of how many you have. When only one unit is left, two customers in two
 different countries can both buy it in the same second, and one of those orders
 has to be cancelled. That is overselling, and it costs money and seller rating.
 
-## What it does
+### What it does
 
 OctoMan Lite is a small, standalone version of OctoMan, the inventory tool I
 am building. It keeps one shared stock level (the "shelf") for four Amazon
@@ -38,7 +123,7 @@ The dashboard shows the shelf in the middle and the four stores around it. A
 A six-step strip shows where each order is, or where it was stopped. "Restock
 the demo" puts every product back. All products and orders are made-up data.
 
-## How it works
+### How it works
 
 ![OctoMan Lite architecture](architecture.png)
 
@@ -59,7 +144,7 @@ the demo" puts every product back. All products and orders are made-up data.
 6. **Save receipt:** a Lambda function stores a receipt JSON in S3 and marks
    the order as sold.
 
-## Why it cannot oversell
+### Why it cannot oversell
 
 "Is there enough?" and "take it off the shelf" happen in a single conditional
 DynamoDB transaction: decrease the stock only if it is at least the ordered
@@ -74,7 +159,7 @@ $13.25 at the ECB rate, and all four stores were updated after each sale. When
 two stores ordered the last print at the same moment, one was sold and one was
 blocked. An order for five keychains with three in stock was blocked.
 
-## No pipeline
+### No pipeline
 
 The whole system is one AWS SAM template. Deploying is `sam build` and then
 `sam deploy`. There is no CI/CD and no separate upload step for the website: a
@@ -82,7 +167,7 @@ CloudFormation custom resource publishes the dashboard files and writes its
 config (the API address) during the deploy, and empties the buckets on
 `sam delete`.
 
-## Cost and scale to zero
+### Cost and scale to zero
 
 Everything is pay-per-use: Lambda, Step Functions, DynamoDB on demand, S3,
 CloudFront and API Gateway. There are no servers, so an idle stack costs
@@ -91,7 +176,7 @@ of it the roughly 11 Step Functions state transitions. Because the demo API is
 public, the order route is throttled to one request per second, which caps the
 worst case at roughly $25 a day.
 
-## What I learned
+### What I learned
 
 - **JSONata in Step Functions removes a lot of plumbing.** With `Assign`
   variables, each step reads `$order` or `$stock` directly instead of passing
@@ -106,7 +191,7 @@ worst case at roughly $25 a day.
   Access Control serves the dashboard while the S3 bucket stays fully private;
   only that distribution can read it.
 
-## Try it
+### Try it
 
 - Live demo: <LIVE_DEMO_URL> (open "Try the demo" in the bottom-right corner)
 - Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
@@ -118,7 +203,7 @@ The repository has 165 automated tests that need no AWS account, and a deploy gu
 
 ---
 
-## Form fields
+# Form fields (short versions)
 
 **Problem** (≤ 80 words)
 
@@ -146,7 +231,7 @@ state updates four mock Amazon stores at once, a low-stock warning is written
 directly to DynamoDB, and a receipt goes to S3. A static dashboard on S3 and
 CloudFront reads the same API.
 
-## Screenshots to attach
+# Screenshots to attach
 
 1. The dashboard with the shared shelf and the four Amazon stores around it,
    right after a sale (all four stores showing the new number).
