@@ -14,21 +14,21 @@ LIST_PRICE_RATES = {"AMAZON_US": ("USD", Decimal("1")), "AMAZON_UK": ("GBP", Dec
 
 # sku, title, USD price, stock, low-stock threshold, demo role
 PRODUCTS = [
-    ("OCTO-MUG-001", "Octopus Ceramic Mug", "12.99", 24, 5, ""),
-    ("OCTO-TEE-002", "Tentacle Graphic T-Shirt", "19.99", 18, 5, ""),
-    ("OCTO-PLUSH-003", "Octopus Plush Toy, Small", "15.99", 12, 5, ""),
-    ("OCTO-LAMP-004", "Deep Sea Desk Lamp", "34.99", 5, 5, "at threshold: next sale raises an alert"),
-    ("OCTO-SOCK-005", "Kraken Crew Socks", "8.99", 30, 8, ""),
-    ("OCTO-PRINT-006", "Ink Art Print A4", "24.99", 1, 3, "last unit: use for the race demo"),
+    ("OCTO-MUG-001", "White Ceramic Mug", "12.99", 24, 5, ""),
+    ("OCTO-TEE-002", "Classic White T-Shirt", "19.99", 18, 5, ""),
+    ("OCTO-PLUSH-003", "Teddy Bear Plush, Small", "15.99", 12, 5, ""),
+    ("OCTO-LAMP-004", "Pink Desk Lamp", "34.99", 5, 5, "at threshold: next sale raises an alert"),
+    ("OCTO-SOCK-005", "Patterned Crew Socks", "8.99", 30, 8, ""),
+    ("OCTO-PRINT-006", "Cactus Art Print A4", "24.99", 1, 3, "last unit: use for the race demo"),
     ("OCTO-CASE-007", "Reef Blue Phone Case", "14.99", 9, 5, ""),
     ("OCTO-BOTTLE-008", "Insulated Water Bottle", "21.99", 15, 5, ""),
-    ("OCTO-KEY-009", "Enamel Keychain", "6.99", 3, 3, "at threshold: try ordering 5 (oversell)"),
-    ("OCTO-PUZZLE-010", "Ocean Puzzle, 500 Pieces", "17.99", 7, 5, ""),
+    ("OCTO-KEY-009", "Heart Keychain", "6.99", 3, 3, "at threshold: try ordering 5 (oversell)"),
+    ("OCTO-PUZZLE-010", "Blue Jigsaw Puzzle, 500 Pieces", "17.99", 7, 5, ""),
     ("OCTO-TOTE-011", "Canvas Tote Bag", "11.99", 20, 5, ""),
-    ("OCTO-CAP-012", "Embroidered Cap", "16.99", 6, 5, "one sale away from the threshold"),
+    ("OCTO-CAP-012", "White Baseball Cap", "16.99", 6, 5, "one sale away from the threshold"),
     ("OCTO-CANDLE-013", "Sea Salt Candle", "13.99", 10, 4, ""),
-    ("OCTO-NOTE-014", "Dot-Grid Notebook", "9.99", 25, 5, ""),
-    ("OCTO-STICK-015", "Sticker Pack, 10 Pieces", "4.99", 40, 10, ""),
+    ("OCTO-NOTE-014", "Blank Notebook", "9.99", 25, 5, ""),
+    ("OCTO-STICK-015", "Space Sticker Pack", "4.99", 40, 10, ""),
 ]
 
 
