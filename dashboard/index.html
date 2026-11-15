@@ -51,14 +51,13 @@
       <img src="assets/img/logo.png" alt="" width="36" height="36">
       <span class="brand__name">OctoMan Lite</span>
     </a>
-    <p class="tagline">Sell the same stock on four Amazon stores without ever selling one item twice.</p>
     <div class="topbar__actions">
       <span class="live" id="live" data-state="idle">
         <span class="live__dot" aria-hidden="true"></span>
         <span id="live-text">Connecting…</span>
       </span>
-      <button class="btn btn--quiet" id="how-open" type="button">
-        <svg class="icon" aria-hidden="true"><use href="#i-circle-help"/></svg>Technical details
+      <button class="btn btn--icon" id="how-open" type="button" aria-label="Technical details" title="Technical details">
+        <svg class="icon" aria-hidden="true"><use href="#i-circle-help"/></svg>
       </button>
       <button class="btn btn--icon" id="refresh" type="button" aria-label="Refresh now" title="Refresh now">
         <svg class="icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg>
@@ -74,7 +73,7 @@
 <div class="banner" id="banner" role="alert" hidden>
   <div class="wrap banner__in">
     <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
-    <p id="banner-text">The store data can't be reached right now.</p>
+    <p id="banner-text">Store data can't be reached.</p>
     <button class="btn" id="banner-retry" type="button">Try again</button>
   </div>
 </div>
@@ -85,7 +84,7 @@
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__head">
       <h1 id="hero-title">One shelf, four stores</h1>
-      <p class="hero__lede">Every Amazon store sells from the same shelf. When one sells, the other three are told at once.</p>
+      <p class="hero__lede">When one store sells, all four update.</p>
       <p class="hero__aws"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Runs serverless on AWS</p>
     </div>
     <div class="shelf" id="shelf" aria-live="polite">
@@ -104,7 +103,7 @@
   <section class="flow" aria-labelledby="flow-title">
     <div class="section-head">
       <h2 id="flow-title">What happens to an order</h2>
-      <p class="flow__order" id="flow-order">Open "Try the demo" (bottom right) to place an order.</p>
+      <p class="flow__order" id="flow-order">Press Try the demo to start.</p>
     </div>
     <ol class="flow__steps" id="flow-steps"></ol>
   </section>
@@ -120,7 +119,7 @@
           <button type="button" class="segmented__btn" data-filter="out" aria-pressed="false">Sold out</button>
         </div>
       </div>
-      <p class="inventory__hint muted small">Big number: units on the shelf. Below: each Amazon store. Click a store to sell there.</p>
+      <p class="inventory__hint muted small">Click a store to sell there.</p>
       <ul class="products" id="products" aria-busy="true">
         <li class="skeleton skeleton--row" aria-hidden="true"></li>
         <li class="skeleton skeleton--row" aria-hidden="true"></li>
@@ -133,20 +132,20 @@
       <section aria-labelledby="orders-title">
         <div class="section-head">
           <h2 id="orders-title">Live orders</h2>
-          <p class="muted small">Newest first · click one to follow it</p>
+          <p class="muted small">Click one to follow it.</p>
         </div>
         <ul class="orders" id="orders" aria-busy="true">
           <li class="skeleton skeleton--order" aria-hidden="true"></li>
           <li class="skeleton skeleton--order" aria-hidden="true"></li>
         </ul>
-        <p class="empty" id="orders-empty" hidden>No orders yet. Open "Try the demo" (bottom right) to place the first one.</p>
+        <p class="empty" id="orders-empty" hidden>No orders yet.</p>
       </section>
       <section aria-labelledby="alerts-title">
         <div class="section-head">
           <h2 id="alerts-title">Low-stock warnings</h2>
         </div>
         <ul class="alerts" id="alerts"></ul>
-        <p class="empty" id="alerts-empty" hidden>No warnings. Every product is above its warning level.</p>
+        <p class="empty" id="alerts-empty" hidden>No warnings.</p>
       </section>
     </aside>
   </div>
@@ -155,7 +154,7 @@
   <details class="how" id="how">
     <summary>
       <span>Technical details</span>
-      <span class="muted small">How it works on AWS · why it cannot oversell</span>
+      <span class="muted small">How it works on AWS</span>
       <svg class="icon how__chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
     </summary>
     <div class="how__body">
@@ -179,36 +178,36 @@
           </g>
         </svg>
       </div>
-      <h3>Each step and the AWS service behind it</h3>
+      <h3>Steps and AWS services</h3>
       <table class="steps-table">
         <thead><tr><th scope="col">Step on the page</th><th scope="col">AWS service</th><th scope="col">What it does</th></tr></thead>
         <tbody>
-          <tr><td>Order arrives</td><td>API Gateway (HTTP API) + Lambda</td><td>Checks the order and starts the Step Functions workflow; the order id is the execution name, so a repeat cannot run twice.</td></tr>
-          <tr><td>Check the shelf</td><td>DynamoDB transaction</td><td>Takes the units off the shelf only if enough are left, and records the order, in one all-or-nothing step.</td></tr>
-          <tr><td>Update all 4 stores</td><td>Step Functions Parallel state</td><td>Pushes the new quantity to the four Amazon stores at the same time (mock mode: the Amazon Selling Partner API request is built, not sent).</td></tr>
-          <tr><td>Convert to dollars</td><td>Lambda + ECB reference rates</td><td>Converts the local price to US dollars with the European Central Bank's daily rates.</td></tr>
-          <tr><td>Low-stock warning</td><td>DynamoDB (direct from Step Functions)</td><td>Writes a warning when a product falls below its warning level.</td></tr>
-          <tr><td>Save receipt</td><td>Lambda + S3</td><td>Stores a receipt file and marks the order as sold.</td></tr>
+          <tr><td>Order arrives</td><td>API Gateway + Lambda</td><td>Starts the workflow. A repeat cannot run twice.</td></tr>
+          <tr><td>Check the shelf</td><td>DynamoDB transaction</td><td>Takes units only if enough are left.</td></tr>
+          <tr><td>Update all 4 stores</td><td>Step Functions Parallel state</td><td>All four stores at once (mock mode).</td></tr>
+          <tr><td>Convert to dollars</td><td>Lambda + ECB rates</td><td>Today's European Central Bank rate.</td></tr>
+          <tr><td>Low-stock warning</td><td>DynamoDB</td><td>Warns below the warning level.</td></tr>
+          <tr><td>Save receipt</td><td>Lambda + S3</td><td>Stores a receipt, marks the order sold.</td></tr>
         </tbody>
       </table>
       <div class="how__cols">
         <div>
           <h3>Why it cannot oversell</h3>
           <ul class="ticks">
-            <li>The shelf is one number in one database row. Every store sells from it; none keeps its own copy.</li>
-            <li>“Check there is enough” and “take it off the shelf” happen in one step that the database does all at once, so two orders can't both take the last one.</li>
-            <li>An order that asks for more than is left is stopped at that step and recorded as blocked. Nothing is sold.</li>
+            <li>One shelf number. No store keeps its own copy.</li>
+            <li>Checking and taking are one database step, so two orders cannot both get the last item.</li>
+            <li>An order that is too big is blocked. Nothing is sold.</li>
           </ul>
         </div>
         <div>
           <h3>About this demo</h3>
           <ul class="ticks">
-            <li>Products and orders are made-up demo data.</li>
-            <li>The Amazon stores run in mock mode: the real Amazon Selling Partner API request is built but not sent, so no Amazon seller account is involved.</li>
-            <li>Every part is serverless and pay-per-use: it costs nothing while nobody is ordering.</li>
+            <li>Made-up products and orders.</li>
+            <li>Amazon requests are built but never sent (mock mode). No Amazon seller account is involved.</li>
+            <li>Costs nothing while nobody orders.</li>
           </ul>
           <p class="how__links">
-            <a href="https://github.com/anxious956/octoman-lite-hackathon" rel="noopener" target="_blank">Source code and setup guide<svg class="icon" aria-hidden="true"><use href="#i-external-link"/></svg></a>
+            <a href="https://github.com/anxious956/octoman-lite-hackathon" rel="noopener" target="_blank">Source code<svg class="icon" aria-hidden="true"><use href="#i-external-link"/></svg></a>
           </p>
         </div>
       </div>
@@ -218,7 +217,7 @@
 
 <footer class="foot">
   <div class="wrap foot__in">
-    <span>OctoMan Lite · runs serverless on AWS · demo data · Amazon stores in mock mode</span>
+    <span>Demo data · Amazon stores in mock mode</span>
     <span>Fonts: IBM Plex (OFL) · Flags: flag-icons (MIT) · Icons: Lucide (ISC)</span>
   </div>
 </footer>
@@ -232,31 +231,30 @@
         <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
       </button>
     </div>
-    <p class="demo__hint" id="try-hint">Each button places real orders and picks a product for you.</p>
     <div class="tryit__grid" id="tryit">
       <button class="story" type="button" data-scenario="sell">
         <svg class="icon" aria-hidden="true"><use href="#i-shopping-bag"/></svg>
         <span class="story__title">A customer in Germany buys one</span>
-        <span class="story__text">Shelf drops by one, all stores follow.</span>
+        <span class="story__text">All four stores update.</span>
       </button>
       <button class="story" type="button" data-scenario="low">
         <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
         <span class="story__title">Sell until stock runs low</span>
-        <span class="story__text">Takes a product below its warning level.</span>
+        <span class="story__text">Triggers a warning.</span>
       </button>
       <button class="story" type="button" data-scenario="race">
         <svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>
         <span class="story__title">Two customers, one last item</span>
-        <span class="story__text">Both order at once. Only one gets it.</span>
+        <span class="story__text">Only one gets it.</span>
       </button>
       <button class="story" type="button" data-scenario="oversell">
         <svg class="icon" aria-hidden="true"><use href="#i-ban"/></svg>
         <span class="story__title">Someone orders more than we have</span>
-        <span class="story__text">Blocked before anything is sold.</span>
+        <span class="story__text">Blocked, nothing sold.</span>
       </button>
     </div>
     <div class="restock-confirm" id="restock-confirm" role="group" aria-labelledby="restock-q" hidden>
-      <p id="restock-q">Put all products back on the shelf and clear the order list? Anyone else using the demo will see it reset.</p>
+      <p id="restock-q">Restock everything and clear the orders? Others using the demo will see it too.</p>
       <div class="restock-confirm__actions">
         <button class="btn btn--quiet" id="restock-no" type="button">Cancel</button>
         <button class="btn btn--brand" id="restock-yes" type="button">Yes, restock</button>

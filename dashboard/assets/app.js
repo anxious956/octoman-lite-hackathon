@@ -67,13 +67,13 @@ function postOrder(order) {
 
 /** One place that turns an HTTP result into words for a shop owner. */
 function messageFor(res) {
-  if (res.status === 0) return "Couldn't reach the store data. Check the connection and try again.";
-  if (res.status === 429) return "Too many orders at once. Wait a second and try again.";
+  if (res.status === 0) return "Can't reach the store data.";
+  if (res.status === 429) return "Too many orders, wait a second.";
   if (res.status === 409) return "That order was already received.";
   const errs = res.body && res.body.errors;
   if (errs && errs.length) return errs.join(" ");
   if (res.body && res.body.message) return res.body.message;
-  return `The order could not be placed (error ${res.status}).`;
+  return `Order failed (error ${res.status}).`;
 }
 
 // ── tiny DOM helpers ────────────────────────────────────────────────
@@ -215,8 +215,8 @@ function renderBanner() {
   $("banner").hidden = !show;
   if (show) {
     setText($("banner-text"), state.loaded
-      ? "Lost the connection to the store data. What you see may be out of date."
-      : "The store data can't be reached right now. The demo may be starting up.");
+      ? "Connection lost, data may be outdated."
+      : "Store data can't be reached.");
   }
 }
 
@@ -338,7 +338,7 @@ function renderFlow() {
   });
   const head = $("flow-order");
   if (!fo) {
-    head.replaceChildren('Open "Try the demo" (bottom right) to place an order.');
+    head.replaceChildren("Press Try the demo to start.");
     return;
   }
   const m = D.MARKET_BY_ID[fo.marketplace];
@@ -362,11 +362,6 @@ function renderTryit() {
   for (const b of document.querySelectorAll(".story")) {
     b.disabled = !state.loaded || isBusy() || !picks[b.dataset.scenario];
   }
-  setText($("try-hint"), outdated
-    ? "The demo data is from an older version. Restock the demo to start."
-    : soldOut
-      ? "Everything is sold out. Put the stock back?"
-      : "Each button places real orders on this demo and picks a product for you.");
   // Restock: a quiet secondary action, the primary one when nothing can be sold.
   $("demo").classList.toggle("is-soldout", needsRestock);
   setText($("demo-open-text"), outdated ? "Restock the demo to start"
@@ -402,7 +397,7 @@ async function restock() {
   state.restockRestUntil = Date.now() + RESTOCK_REST_MS;
   setTimeout(renderTryit, RESTOCK_REST_MS + 30);
   if (res.status === 200) {
-    toast("Demo restocked: every product is back on the shelf and the order list is empty.", "ok");
+    toast("Demo restocked.", "ok");
     closeDemo(false);
     state.focusedOrderId = null;
     state.expandedOrderId = null;
@@ -410,7 +405,7 @@ async function restock() {
     state.pending.clear();
     await refresh();
   } else {
-    toast(res.status === 429 ? "The demo was just restocked. Try again in a moment." : messageFor(res), "bad");
+    toast(res.status === 429 ? "Just restocked, try again shortly." : messageFor(res), "bad");
     renderTryit();
   }
 }
@@ -495,7 +490,7 @@ function renderRowButtons(sku) {
   refs.race.hidden = left === 0;
   refs.race.disabled = busy;
   refs.race.classList.toggle("is-emphasised", left === 1);
-  setText(refs.race, left === 1 ? "Race: 2 stores want the last one" : `Race: 2 stores want all ${left}`);
+  setText(refs.race, left === 1 ? "Race for the last one" : `Race for all ${left}`);
   refs.race.setAttribute("aria-label",
     `Two customers in two different stores try to buy all ${left} of ${p.title} at the same moment`);
 }
@@ -542,10 +537,10 @@ function renderProducts(maxUnits) {
   const empty = $("products-empty");
   if (!state.products.length) {
     empty.hidden = false;
-    setText(empty, "No products yet. Load the demo products with scripts/seed.py.");
+    setText(empty, "No products yet.");
   } else if (!visible.size) {
     empty.hidden = false;
-    setText(empty, state.filter === "low" ? "No product is running low right now." : "Nothing is sold out right now.");
+    setText(empty, state.filter === "low" ? "None running low." : "Nothing sold out.");
   } else {
     empty.hidden = true;
   }
@@ -587,13 +582,11 @@ function detailRows(o) {
   const rows = [["Order number", o.order_id], ["Received", new Date(o.created_at).toLocaleString()]];
   if (o.status === "COMPLETED") {
     const s = o.sync_summary || {};
-    rows.push(["Shelf after the sale", `${o.stock_after} left`]);
+    rows.push(["Shelf after", `${o.stock_after} left`]);
     rows.push(["Stores", `${s.synced ?? 0} updated, ${s.skipped ?? 0} already knew, ${s.errored ?? 0} failed`]);
     const note = D.fxNote(o);
     if (note) rows.push(["Price in dollars", `${D.formatMoney(o.base_total, o.base_currency)}, ${note}`]);
-    if (o.receipt_key) rows.push(["Receipt saved as", o.receipt_key]);
-  } else if (o.status === "REJECTED") {
-    rows.push(["Why", D.blockedSentence(o)]);
+    if (o.receipt_key) rows.push(["Receipt", o.receipt_key]);
   }
   return rows;
 }
@@ -661,7 +654,7 @@ function renderAlerts() {
       el("div", null, [
         el("div", { class: "alert__what", text: a.title || productTitle(a.sku) }),
         el("div", { class: "alert__why",
-          text: `${a.stock} left · warn below ${a.threshold} · after a sale in ${m ? m.name : a.marketplace}, ${D.timeAgo(a.updated_at)}` }),
+          text: `${a.stock} left · warn below ${a.threshold} · ${D.timeAgo(a.updated_at)}` }),
       ]),
       el("span", { class: `chip chip--${out ? "out" : "low"}` }, [icon(out ? "octagon-x" : "triangle-alert"), out ? "Sold out" : "Running low"]),
     ]);
@@ -789,7 +782,7 @@ function sellFromRow(sku, marketplace) {
   if (!p) return;
   const qty = state.qtyBySku[sku] || 1;
   const m = D.MARKET_BY_ID[marketplace];
-  toast(`A customer in ${m.name} orders ${qty} × ${p.title}.`, "info");
+  toast(`${m.name} orders ${qty} × ${p.title}`, "info");
   placeOrders(p, [{ marketplace, quantity: qty }]);
 }
 
@@ -802,7 +795,7 @@ function raceFromRow(sku) {
 function announceRace(p, orders) {
   const [a, b] = orders.map((o) => D.MARKET_BY_ID[o.marketplace].name);
   const n = orders[0].quantity;
-  toast(`${a} and ${b} both order ${n === 1 ? "the last" : `all ${n}`} × ${p.title} at the same moment. Only one can get it.`, "info");
+  toast(`${a} and ${b} both want ${n === 1 ? "the last" : `all ${n}`} × ${p.title}`, "info");
   placeOrders(p, orders);
 }
 
@@ -830,13 +823,13 @@ function runScenario(name) {
   if (name === "sell") {
     const pick = D.pickSellOne(ps);
     if (!pick) return;
-    toast(`Picked ${pick.product.title} (most units left: ${D.unitsLeft(pick.product)}). A customer in Germany buys 1.`, "info");
+    toast(`Germany buys 1 × ${pick.product.title}`, "info");
     placeOrders(pick.product, pick.orders);
   } else if (name === "low") {
     const pick = D.pickLowStock(ps);
     if (!pick) return;
     const p = pick.product, q = pick.orders[0].quantity;
-    toast(`Picked ${p.title}: ${D.unitsLeft(p)} left, warning below ${D.warnBelow(p)}. Selling ${q} in the United States leaves ${D.unitsLeft(p) - q}.`, "info");
+    toast(`United States buys ${q} × ${p.title}`, "info");
     placeOrders(p, pick.orders);
   } else if (name === "race") {
     const pick = D.pickRace(ps);
@@ -846,7 +839,7 @@ function runScenario(name) {
     const pick = D.pickOversell(ps);
     if (!pick) return;
     const p = pick.product;
-    toast(`Picked ${p.title}: only ${D.unitsLeft(p)} left. A customer in the United Kingdom asks for ${pick.orders[0].quantity}.`, "info");
+    toast(`United Kingdom asks for ${pick.orders[0].quantity} × ${p.title}`, "info");
     placeOrders(p, pick.orders);
   }
 }
@@ -917,7 +910,7 @@ wire();
 if (params.get("demo") === "open") openDemo();
 if (!API) {
   state.error = new Error("no api");
-  setText($("banner-text"), "This page has no API address. Deploy it with sam deploy, or open it locally with ?api=<ApiUrl>.");
+  setText($("banner-text"), "No API address: deploy with sam deploy.");
   $("banner").hidden = false;
   renderLive(false);
 } else {

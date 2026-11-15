@@ -32,7 +32,7 @@ test("summary counts every recent order and only USD-converted sales", () => {
 test("flow strip: blocked order stops at 'Check the shelf'", () => {
   const { states, notes } = D.flowStates({ status: "REJECTED", requested: 1, available: 0, quantity: 1 });
   assert.deepEqual(states, ["done", "blocked", "skipped", "skipped", "skipped", "skipped"]);
-  assert.match(notes[1], /1 wanted, 0 left\. Nobody was oversold\./);
+  assert.equal(notes[1], "Nobody was oversold.");
 });
 
 test("flow strip: completed order, with and without a low-stock warning", () => {
@@ -110,11 +110,11 @@ test("nothing to pick when everything is sold out", () => {
 
 test("plain-language wording", () => {
   assert.deepEqual(D.orderStatus({ status: "COMPLETED" }), { key: "sold", text: "Sold" });
-  assert.equal(D.orderStatus({ status: "REJECTED" }).text, "Blocked: not enough stock");
+  assert.equal(D.orderStatus({ status: "REJECTED" }).text, "Blocked");
   assert.equal(D.orderStatus({ status: "RESERVED" }).text, "Processing");
-  assert.equal(D.blockedSentence({ requested: 5, available: 3 }), "Oversell prevented: wanted 5, only 3 left.");
+  assert.equal(D.blockedSentence({ requested: 5, available: 3 }), "Wanted 5, only 3 left.");
   assert.equal(D.fxNote({ status: "COMPLETED", fx_source: "ECB", fx_date: "2026-11-13" }),
-    "converted at the ECB rate of 2026-11-13");
+    "ECB rate of 2026-11-13");
   assert.equal(D.fxNote({ status: "COMPLETED", fx_source: "identity" }), "");
   assert.equal(D.usdTotal({ status: "COMPLETED", base_currency: "EUR", base_total: 5 }), null);
 });

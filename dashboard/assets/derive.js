@@ -63,22 +63,22 @@ export function formatMoney(amount, currency) {
 /** Plain-language status for an order row. */
 export function orderStatus(o) {
   if (o.status === "COMPLETED") return { key: "sold", text: "Sold" };
-  if (o.status === "REJECTED") return { key: "blocked", text: "Blocked: not enough stock" };
+  if (o.status === "REJECTED") return { key: "blocked", text: "Blocked" };
   return { key: "processing", text: "Processing" };
 }
 
 export function blockedSentence(o) {
   const wanted = Number(o.requested ?? o.quantity) || 0;
   const left = Number(o.available) || 0;
-  return `Oversell prevented: wanted ${wanted}, only ${left} left.`;
+  return `Wanted ${wanted}, only ${left} left.`;
 }
 
 /** Short note about the currency conversion, or "" when none is needed. */
 export function fxNote(o) {
   if (o.status !== "COMPLETED") return "";
-  if (o.fx_source === "ECB") return `converted at the ECB rate of ${o.fx_date}`;
-  if (o.fx_source === "fallback") return "converted at a saved rate";
-  if (o.fx_source === "fallback_error") return "not converted (rate service unavailable)";
+  if (o.fx_source === "ECB") return `ECB rate of ${o.fx_date}`;
+  if (o.fx_source === "fallback") return "saved rate";
+  if (o.fx_source === "fallback_error") return "not converted";
   return "";
 }
 
@@ -108,10 +108,10 @@ export function summary(orders, alerts) {
 // ── flow strip ──────────────────────────────────────────────────────
 
 export const FLOW_STEPS = [
-  { key: "in", name: "Order arrives", caption: "API Gateway + Lambda", icon: "shopping-bag" },
-  { key: "shelf", name: "Check the shelf", caption: "DynamoDB transaction", icon: "package" },
-  { key: "shops", name: "Update all 4 stores", caption: "Step Functions Parallel", icon: "store" },
-  { key: "fx", name: "Convert to dollars", caption: "Lambda + ECB rates", icon: "circle-dollar-sign" },
+  { key: "in", name: "Order arrives", caption: "API Gateway", icon: "shopping-bag" },
+  { key: "shelf", name: "Check the shelf", caption: "DynamoDB", icon: "package" },
+  { key: "shops", name: "Update all 4 stores", caption: "Step Functions", icon: "store" },
+  { key: "fx", name: "Convert to dollars", caption: "Lambda", icon: "circle-dollar-sign" },
   { key: "low", name: "Low-stock warning", caption: "DynamoDB", icon: "triangle-alert" },
   { key: "receipt", name: "Save receipt", caption: "S3", icon: "receipt" },
 ];
@@ -130,9 +130,7 @@ export function flowStates(order, alerts = []) {
     return { states: ["done", "running", "waiting", "waiting", "waiting", "waiting"], notes };
   }
   if (order.status === "REJECTED") {
-    const wanted = Number(order.requested ?? order.quantity) || 0;
-    const left = Number(order.available) || 0;
-    notes[at("shelf")] = `Stopped here. ${wanted} wanted, ${left} left. Nobody was oversold.`;
+    notes[at("shelf")] = "Nobody was oversold.";
     return { states: ["done", "blocked", "skipped", "skipped", "skipped", "skipped"], notes };
   }
   if (order.status === "COMPLETED") {
