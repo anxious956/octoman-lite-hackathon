@@ -5,8 +5,11 @@ NOTE FOR THE AUTHOR (delete this block before posting):
   description. Put the public video link (under 3 minutes, showing the build
   running end to end) in the "demo" field, and the live dashboard / repo links
   where the form asks for them.
-- The Rules tab was not checked (eligibility, team and AI-use terms). Read it
-  before submitting, and keep or delete the optional AI-assistant line to match.
+- Qualification is pass/fail: a published written project (PART 1), a public
+  video under 3 minutes in the "demo" field, serverless AWS only, and an
+  original, previously unpublished project. See the VIDEO CHECKLIST at the end.
+- The optional AI-assistant line: keep or delete it after checking the Terms
+  for anything about AI tools.
 - Replace <LIVE_DEMO_URL> and <VIDEO_URL>.
 - PART 2 (the longer article) is optional, e.g. for a Builder Center post; check
   any title prefix, tags and minimum length there before posting it.
@@ -14,7 +17,24 @@ NOTE FOR THE AUTHOR (delete this block before posting):
 
 # PART 1: Project description (paste into "Your project")
 
-## OctoMan Lite: one shelf of stock on four Amazon stores, without overselling
+## Title (pick one)
+
+1. OctoMan Lite: one shelf, four Amazon stores, and the last unit sells only once
+2. OctoMan Lite: serverless stock that can't be oversold across four marketplaces
+3. OctoMan Lite: two countries buy the last item at once, and only one wins
+
+## Card summary (shown in the project list)
+
+One stock level for four Amazon stores, checked in a single conditional DynamoDB
+transaction, so the last unit sells only once. Step Functions fans each sale out
+to all four stores in parallel. Lambda, API Gateway, S3, CloudFront: one SAM
+template, no pipeline, scales to zero.
+
+## Tags
+
+#serverless #aws-step-functions #amazon-dynamodb #aws-lambda #aws-sam
+
+## Description
 
 ### The problem I picked and what the build does
 
@@ -66,6 +86,17 @@ stack costs only a few kilobytes of storage, and one order costs about $0.0003.
   shelf and four stores, and four short demo stories: a customer buys one,
   stock runs low, two customers want the last item, someone orders more than
   we have.
+
+### Reuse this pattern
+
+The template is one flat file meant to be copied. Four pieces transfer to other
+projects: the conditional "check and decrement" with idempotency in one DynamoDB
+transaction fits seat booking, quotas and coupon redemption; using the business
+id (here the order id) as the Step Functions execution name gives duplicate
+protection for free; catching a business error and routing it to a recorded
+outcome plus a Fail state makes the console graph show exactly why a request
+stopped; and a CloudFormation custom resource that uploads a static site and
+writes its config turns any dashboard into part of a single `sam deploy`.
 
 ### Scope
 
@@ -240,3 +271,21 @@ CloudFront reads the same API.
 3. The Step Functions execution graph of a sale, with the four parallel
    "Push Amazon" branches, and of a blocked order ending in `OversellPrevented`.
 4. The "Technical details" section with the step-to-AWS-service table.
+
+# Video checklist (for the "demo" field)
+
+- **Under 3 minutes**, showing the build running end to end (`docs/demo_script.md`
+  has a 2:30 script).
+- Show, in this order: a sale rippling to all four stores, the last-item race
+  (one sold, one blocked), the red **OversellPrevented** stop in the Step
+  Functions execution graph, then **Restock the demo**.
+- Record in a clean browser window: no bookmarks bar, no other tabs, no
+  notifications. **No music.**
+- **No third-party trademarks or sites:** do not show GitHub or any other
+  third-party site or logo. Note for your decision: the dashboard itself shows
+  the word "Amazon" and the store domains (amazon.com, .co.uk, .de, .com.tr) as
+  plain text. The challenge is run by AWS, but check whether that counts as a
+  "third party trademark" under the Terms; if in doubt, ask before recording.
+- Upload it as **public** on YouTube, Vimeo, Facebook Video or Youku.
+- Paste the link into the project's **"demo"** field, and replace `<VIDEO_URL>`
+  above.
