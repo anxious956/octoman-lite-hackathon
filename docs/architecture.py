@@ -52,6 +52,7 @@ NODES = {
     "dash_bucket": (520, 130, "simple-storage-service-s3-bucket", ["S3", "dashboard bucket"], "below"),
     "api": (330, 330, "api-gateway", ["API Gateway", "HTTP API, throttled"], "below"),
     "query": (690, 330, "lambda", ["QueryApi"], "below"),
+    "reset": (520, 230, "lambda", ["ResetDemo", "restock the demo"], "below"),
     "ingest": (520, 470, "lambda", ["IngestOrder"], "below"),
     "start": (720, 470, "step-functions", ["Execution", "name = order_id"], "below"),
     "reserve": (895, 470, "lambda", ["ReserveStock"], "below"),
@@ -85,9 +86,10 @@ EDGES = [
     # client traffic
     ("data", [(147, 130), (298, 130)], ["loads from"], 222, 121, "middle"),
     ("call", [(362, 130), (488, 130)], [], 0, 0, ""),
-    ("call", [(115, 200), (115, 315), (298, 315)], ["GET /products /orders /alerts", "POST /orders"], 206, 284, "middle"),
+    ("call", [(115, 200), (115, 315), (298, 315)], ["GET /products /orders /alerts", "POST /orders, /demo/reset"], 206, 284, "middle"),
     ("call", [(147, 450), (240, 450), (240, 345), (298, 345)], ["POST /orders"], 192, 441, "middle"),
     ("call", [(362, 330), (658, 330)], ["GET"], 510, 321, "middle"),
+    ("call", [(330, 298), (330, 230), (488, 230)], ["POST /demo/reset"], 409, 221, "middle"),
     ("call", [(330, 400), (330, 470), (488, 470)], ["POST /orders"], 410, 461, "middle"),
     ("flow", [(552, 470), (688, 470)], ["StartExecution"], 620, 461, "middle"),
     # order flow
@@ -110,6 +112,8 @@ EDGES = [
     ("data", [(1822, 470), (1958, 470)], ["receipt"], 1890, 461, "middle"),
     ("data", [(1070, 532), (1070, 873)], ["HTTPS"], 1079, 812, "start"),
     ("data", [(1260, 545), (1260, 873)], ["mock adapter"], 1269, 812, "start"),
+    # ResetDemo: restore products, clear orders and alerts (BatchWriteItem)
+    ("data", [(552, 262), (940, 262)], ["restock"], 745, 253, "middle"),
     # QueryApi read bus
     ("data", [(690, 298), (690, 95), (990, 95), (990, 198)], ["read"], 840, 86, "middle"),
     ("data", [(690, 298), (690, 95), (1260, 95), (1260, 198)], [], 0, 0, ""),
