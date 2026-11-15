@@ -716,9 +716,12 @@ async function refresh() {
     }
     render();
     snapshot();
-    // A fresh or just-restocked demo has no orders: show the scenarios once, without
-    // taking keyboard focus, so a first-time visitor sees what to click.
-    if (firstLoad && !state.orders.length && $("demo-panel").hidden) openDemo(false);
+    // Open the demo panel once, without taking keyboard focus, when a first-time visitor
+    // needs it: a fresh demo (no orders yet) or one that must be restocked first
+    // (everything sold out, or products stored by an older version).
+    const needsRestock = state.products.length > 0 &&
+      (D.hasNoKnownListings(state.products) || inStockCount() === 0);
+    if (firstLoad && (!state.orders.length || needsRestock) && $("demo-panel").hidden) openDemo(false);
   } catch (e) {
     state.error = e;
     render();
