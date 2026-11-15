@@ -17,68 +17,16 @@ import argparse
 import json
 import re
 import sys
+import time
 from datetime import datetime, timezone
-from decimal import ROUND_FLOOR, Decimal
+from pathlib import Path
 
-# Fixed demo multipliers for list prices only (orders are converted with live
-# ECB rates by the workflow). Units of local currency per 1 USD.
-LIST_PRICE_RATES = {"EBAY_US": ("USD", Decimal("1")), "EBAY_GB": ("GBP", Decimal("0.76")),
-                    "EBAY_DE": ("EUR", Decimal("0.90")), "EBAY_TR": ("TRY", Decimal("50"))}
-
-# sku, title, USD price, stock, low-stock threshold, demo role
-PRODUCTS = [
-    ("OCTO-MUG-001", "Octopus Ceramic Mug", "12.99", 24, 5, ""),
-    ("OCTO-TEE-002", "Tentacle Graphic T-Shirt", "19.99", 18, 5, ""),
-    ("OCTO-PLUSH-003", "Octopus Plush Toy, Small", "15.99", 12, 5, ""),
-    ("OCTO-LAMP-004", "Deep Sea Desk Lamp", "34.99", 5, 5, "at threshold: next sale raises an alert"),
-    ("OCTO-SOCK-005", "Kraken Crew Socks", "8.99", 30, 8, ""),
-    ("OCTO-PRINT-006", "Ink Art Print A4", "24.99", 1, 3, "last unit: use for the race demo"),
-    ("OCTO-CASE-007", "Reef Blue Phone Case", "14.99", 9, 5, ""),
-    ("OCTO-BOTTLE-008", "Insulated Water Bottle", "21.99", 15, 5, ""),
-    ("OCTO-KEY-009", "Enamel Keychain", "6.99", 3, 3, "at threshold: try ordering 5 (oversell)"),
-    ("OCTO-PUZZLE-010", "Ocean Puzzle, 500 Pieces", "17.99", 7, 5, ""),
-    ("OCTO-TOTE-011", "Canvas Tote Bag", "11.99", 20, 5, ""),
-    ("OCTO-CAP-012", "Embroidered Cap", "16.99", 6, 5, "one sale away from the threshold"),
-    ("OCTO-CANDLE-013", "Sea Salt Candle", "13.99", 10, 4, ""),
-    ("OCTO-NOTE-014", "Dot-Grid Notebook", "9.99", 25, 5, ""),
-    ("OCTO-STICK-015", "Sticker Pack, 10 Pieces", "4.99", 40, 10, ""),
-]
+# The product list lives in src/shared/seed_data.py so the reset_demo Lambda ships
+# with exactly the same data. Import it from this folder's own src/ (nothing outside).
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from shared.seed_data import PRODUCTS, build_items  # noqa: E402
 
 _PREFIX_RE = re.compile(r"^octoman-lite(-[a-z0-9]{1,10})?$")
-
-
-def _local_price(usd: Decimal, mp: str) -> Decimal:
-    currency, rate = LIST_PRICE_RATES[mp]
-    raw = usd * rate
-    if currency == "TRY":  # e.g. 649.99
-        return (raw / 10).to_integral_value(ROUND_FLOOR) * 10 + Decimal("9.99")
-    return raw.to_integral_value(ROUND_FLOOR) + Decimal("0.99")  # e.g. 11.99
-
-
-def build_items(now: str) -> list[dict]:
-    items = []
-    for i, (sku, title, usd, stock, threshold, _role) in enumerate(PRODUCTS, start=1):
-        listings = {}
-        for mp, (currency, _) in LIST_PRICE_RATES.items():
-            listings[mp] = {
-                "offer_id": f"MOCK-OFFER-{mp[-2:]}-{i:03d}",
-                "price": _local_price(Decimal(usd), mp),
-                "currency": currency,
-                "listed_qty": stock,
-                "synced_version": 0,
-                "sync_status": "seeded",
-                "last_synced_at": now,
-            }
-        items.append({
-            "sku": sku,
-            "title": title,
-            "stock_on_hand": stock,
-            "stock_version": 0,
-            "low_stock_threshold": threshold,
-            "updated_at": now,
-            "listings": listings,
-        })
-    return items
 
 
 def _clear(table, key: str) -> int:
@@ -109,7 +57,7 @@ def main(argv=None) -> int:
         p.error("--prefix must be 'octoman-lite' or 'octoman-lite-<suffix>' (refusing to touch other tables)")
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-    items = build_items(now)
+    items = build_items(now, version_base=int(time.time() * 1000))
 
     if args.dry_run:
         print(json.dumps(items, indent=2, default=str))

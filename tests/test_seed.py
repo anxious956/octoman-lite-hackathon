@@ -53,3 +53,31 @@ def test_seeds_and_resets_against_moto(tables, monkeypatch):
     assert seed.main(["--region", "us-east-1", "--reset"]) == 0
     assert ddb.Table("octoman-lite-products").scan()["Count"] == 15
     assert ddb.Table("octoman-lite-orders").scan()["Count"] == 0
+
+
+def test_cli_writes_the_same_products_as_the_reset_lambda(tables):
+    """scripts/seed.py and handlers/reset_demo.py both use shared.seed_data."""
+    import boto3
+    from handlers import reset_demo
+    from shared.seed_data import build_items
+
+    ddb = boto3.resource("dynamodb", region_name="us-east-1")
+    ddb.create_table(TableName="octoman-lite-products", BillingMode="PAY_PER_REQUEST",
+                     KeySchema=[{"AttributeName": "sku", "KeyType": "HASH"}],
+                     AttributeDefinitions=[{"AttributeName": "sku", "AttributeType": "S"}])
+    assert seed.main(["--region", "us-east-1"]) == 0
+    written = {p["sku"]: p for p in ddb.Table("octoman-lite-products").scan()["Items"]}
+
+    def comparable(p):
+        p = dict(p)
+        for k in ("updated_at", "stock_version"):
+            p.pop(k)
+        p["listings"] = {mp: {k: v for k, v in l.items() if k not in ("last_synced_at", "synced_version")}
+                         for mp, l in p["listings"].items()}
+        return p
+
+    expected = {p["sku"]: comparable(p) for p in build_items("t", version_base=1)}
+    assert {sku: comparable(p) for sku, p in written.items()} == expected
+    # The CLI also uses a time-based version base, like the Lambda.
+    assert all(p["stock_version"] > 10**12 for p in written.values())
+    assert seed.build_items is reset_demo.build_items

@@ -64,8 +64,8 @@ def test_every_asset_is_credited():
 
 
 def test_every_seed_product_has_an_image():
-    seed = (DASHBOARD.parent / "scripts" / "seed.py").read_text(encoding="utf-8")
-    skus = re.findall(r'\("(OCTO-[A-Z]+-\d{3})"', seed)
+    from shared.seed_data import PRODUCTS
+    skus = [row[0] for row in PRODUCTS]
     assert len(skus) == 15
     for sku in skus:
         assert (ASSETS / "img" / "products" / f"{sku.lower()}.svg").is_file(), sku

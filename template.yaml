@@ -344,6 +344,52 @@ Resources:
             Method: GET
             Path: /alerts
 
+  ResetDemoLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-reset-demo'
+      RetentionInDays: 7
+
+  # "Restock the demo": puts the 15 seed products back and clears orders and alerts,
+  # so a visitor never finds the demo sold out. Touches only the three Lite tables.
+  ResetDemoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-reset-demo'
+      Description: Restores the demo products and clears orders and alerts (POST /demo/reset).
+      CodeUri: src/
+      Handler: handlers.reset_demo.handler
+      Timeout: 30
+      LoggingConfig:
+        LogGroup: !Ref ResetDemoLogGroup
+      Policies:
+        - Statement:
+            - Sid: RestoreProductsClearOrdersAndAlerts
+              Effect: Allow
+              Action: dynamodb:BatchWriteItem
+              Resource:
+                - !GetAtt ProductsTable.Arn
+                - !GetAtt OrdersTable.Arn
+                - !GetAtt AlertsTable.Arn
+            - Sid: FindRowsToClear
+              Effect: Allow
+              Action: dynamodb:Scan
+              Resource:
+                - !GetAtt OrdersTable.Arn
+                - !GetAtt AlertsTable.Arn
+      Events:
+        ResetDemo:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: POST
+            Path: /demo/reset
+            RouteSettings:
+              ThrottlingBurstLimit: 2
+              ThrottlingRateLimit: 1
+
   # ===============================================
   # LAMBDA: workflow tasks
   # ===============================================

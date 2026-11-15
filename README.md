@@ -57,7 +57,9 @@ POST /orders  {"marketplace": "DE", "sku": "OCTO-LAMP-004", "quantity": 1}
    `COMPLETED`.
 
 `GET /products`, `GET /orders` and `GET /alerts` feed a static dashboard served
-from S3 through CloudFront.
+from S3 through CloudFront. `POST /demo/reset` ("Restock the demo" on the
+dashboard) puts the 15 demo products back and clears the order list, so a visitor
+never finds the demo sold out.
 
 ## Architecture
 
@@ -114,8 +116,8 @@ flowchart LR
 
 | Service | Role |
 |---|---|
-| **API Gateway (HTTP API)** | `POST /orders`, `GET /products`, `GET /orders`, `GET /alerts`. CORS limited to the dashboard. Throttled: 10 rps by default, `POST /orders` 1 rps. |
-| **AWS Lambda** (Python 3.12, 6 functions + 1 custom resource) | Validation, reservation, FX, marketplace push, receipt, queries. No third-party packages. |
+| **API Gateway (HTTP API)** | `POST /orders`, `GET /products`, `GET /orders`, `GET /alerts`, `POST /demo/reset`. CORS limited to the dashboard. Throttled: 10 rps by default, `POST /orders` 1 rps, `POST /demo/reset` 1 rps (burst 2). |
+| **AWS Lambda** (Python 3.12, 7 functions + 1 custom resource) | Validation, reservation, FX, marketplace push, receipt, queries, demo reset. No third-party packages. |
 | **AWS Step Functions** (Standard, JSONata) | Orchestrates the order flow; Parallel state fans out to the four marketplaces; Catch turns an oversell into a recorded rejection; direct DynamoDB integrations for the two single-write steps. |
 | **Amazon DynamoDB** (on-demand) | `products` (single source of truth for stock + per-site listing copy), `orders` (GSI for newest first), `alerts` (one row per SKU). |
 | **Amazon S3** | Private receipts bucket (30-day expiry) and private dashboard bucket. |
@@ -202,11 +204,14 @@ Then seed (pass the region you deployed to):
 python scripts/seed.py --profile <your-profile> --region <region>
 ```
 
-Open `DashboardUrl` and click a site button. To start over at any time:
+Open `DashboardUrl` and click a site button. To start over at any time, click
+**Restock the demo** on the dashboard, or from the command line:
 
 ```bash
 python scripts/seed.py --profile <your-profile> --region <region> --reset
 ```
+
+Both use the same product list (`src/shared/seed_data.py`).
 
 ### Try it with curl
 
@@ -265,6 +270,10 @@ sam validate --lint
 python scripts/seed.py --dry-run
 ```
 
+Node.js is optional: if it is installed, pytest also runs the dashboard's
+JavaScript unit tests (`tests/js`) with Node's built-in test runner; without it
+those two tests are skipped.
+
 The tests run every handler against [moto](https://github.com/getmoto/moto)
 (in-memory AWS), check the state machine definition statically, and never touch a
 real account. With Docker running, two functions can also be invoked locally
@@ -303,7 +312,9 @@ has Free Tier allowances for Lambda and Step Functions.
 
 **Worst case if the API URL leaks:** `POST /orders` is throttled to 1 request per
 second, so the most it can run is ~86,000 orders a day, roughly **$25/day**,
-almost all of it Step Functions transitions. Run `sam delete` when you are done.
+almost all of it Step Functions transitions. `POST /demo/reset` is capped at 1
+request per second; each reset is a few hundred DynamoDB writes at most (about
+$0.0003). Run `sam delete` when you are done.
 
 ## Reuse the pattern
 
@@ -350,6 +361,12 @@ projects:
 - **Public API.** There is no authentication on purpose, so judges can use it
   without signing in. Throttling caps abuse and cost. A real deployment would put
   an authorizer (JWT/IAM) on the routes and verify marketplace webhook signatures.
+  The public reset route can only touch the three demo tables (its IAM allows
+  `BatchWriteItem` on them and `Scan` on orders and alerts, nothing else).
+- **Reset while an order is running.** Every reset restarts the stock versions at
+  the current time, so a marketplace push from an order that started before the
+  reset cannot overwrite the restored quantities. Such an order may still fail at
+  its last step (its order row was cleared); that is accepted for a demo reset.
 - **Rejected orders end in a `Fail` state.** That is a deliberate demo choice; a
   production workflow might end in `Succeed` with a status instead and alarm on
   real failures only.
@@ -361,7 +378,7 @@ template.yaml                    the whole stack (SAM)
 samconfig.toml                   deploy defaults (stack name octoman-lite)
 statemachine/order_flow.asl.json order workflow (JSONata)
 src/handlers/                    Lambda entry points
-src/shared/                      db helpers, ECB FX, validation, config
+src/shared/                      db helpers, ECB FX, validation, config, seed data
 src/shared/adapters/             eBay adapter (mock by default)
 dashboard/index.html             static dashboard
 dashboard/deployer.py            custom resource that publishes it

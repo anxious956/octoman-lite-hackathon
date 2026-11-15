@@ -1,0 +1,74 @@
+"""The 15 synthetic demo products, in one place.
+
+Used by scripts/seed.py (command line) and by the reset_demo Lambda, so both
+always restore exactly the same shelf. All data is made up: product names,
+offer ids and prices are synthetic.
+"""
+
+from decimal import ROUND_FLOOR, Decimal
+
+# Fixed demo multipliers for list prices only (orders are converted with live
+# ECB rates by the workflow). Units of local currency per 1 USD.
+LIST_PRICE_RATES = {"EBAY_US": ("USD", Decimal("1")), "EBAY_GB": ("GBP", Decimal("0.76")),
+                    "EBAY_DE": ("EUR", Decimal("0.90")), "EBAY_TR": ("TRY", Decimal("50"))}
+
+# sku, title, USD price, stock, low-stock threshold, demo role
+PRODUCTS = [
+    ("OCTO-MUG-001", "Octopus Ceramic Mug", "12.99", 24, 5, ""),
+    ("OCTO-TEE-002", "Tentacle Graphic T-Shirt", "19.99", 18, 5, ""),
+    ("OCTO-PLUSH-003", "Octopus Plush Toy, Small", "15.99", 12, 5, ""),
+    ("OCTO-LAMP-004", "Deep Sea Desk Lamp", "34.99", 5, 5, "at threshold: next sale raises an alert"),
+    ("OCTO-SOCK-005", "Kraken Crew Socks", "8.99", 30, 8, ""),
+    ("OCTO-PRINT-006", "Ink Art Print A4", "24.99", 1, 3, "last unit: use for the race demo"),
+    ("OCTO-CASE-007", "Reef Blue Phone Case", "14.99", 9, 5, ""),
+    ("OCTO-BOTTLE-008", "Insulated Water Bottle", "21.99", 15, 5, ""),
+    ("OCTO-KEY-009", "Enamel Keychain", "6.99", 3, 3, "at threshold: try ordering 5 (oversell)"),
+    ("OCTO-PUZZLE-010", "Ocean Puzzle, 500 Pieces", "17.99", 7, 5, ""),
+    ("OCTO-TOTE-011", "Canvas Tote Bag", "11.99", 20, 5, ""),
+    ("OCTO-CAP-012", "Embroidered Cap", "16.99", 6, 5, "one sale away from the threshold"),
+    ("OCTO-CANDLE-013", "Sea Salt Candle", "13.99", 10, 4, ""),
+    ("OCTO-NOTE-014", "Dot-Grid Notebook", "9.99", 25, 5, ""),
+    ("OCTO-STICK-015", "Sticker Pack, 10 Pieces", "4.99", 40, 10, ""),
+]
+
+
+def _local_price(usd: Decimal, mp: str) -> Decimal:
+    currency, rate = LIST_PRICE_RATES[mp]
+    raw = usd * rate
+    if currency == "TRY":  # e.g. 649.99
+        return (raw / 10).to_integral_value(ROUND_FLOOR) * 10 + Decimal("9.99")
+    return raw.to_integral_value(ROUND_FLOOR) + Decimal("0.99")  # e.g. 11.99
+
+
+def build_items(now: str, version_base: int = 0) -> list[dict]:
+    """The 15 product rows, ready for DynamoDB.
+
+    version_base: callers pass the current time in epoch milliseconds. It becomes
+    stock_version and every listing's synced_version, so a marketplace push from an
+    order that was still running before a reset (carrying a smaller version) fails
+    the `synced_version < :v` guard and cannot overwrite the restored quantities.
+    New orders continue from version_base + 1.
+    """
+    items = []
+    for i, (sku, title, usd, stock, threshold, _role) in enumerate(PRODUCTS, start=1):
+        listings = {}
+        for mp, (currency, _) in LIST_PRICE_RATES.items():
+            listings[mp] = {
+                "offer_id": f"MOCK-OFFER-{mp[-2:]}-{i:03d}",
+                "price": _local_price(Decimal(usd), mp),
+                "currency": currency,
+                "listed_qty": stock,
+                "synced_version": version_base,
+                "sync_status": "seeded",
+                "last_synced_at": now,
+            }
+        items.append({
+            "sku": sku,
+            "title": title,
+            "stock_on_hand": stock,
+            "stock_version": version_base,
+            "low_stock_threshold": threshold,
+            "updated_at": now,
+            "listings": listings,
+        })
+    return items
