@@ -140,7 +140,7 @@ Put    orders    IF  attribute_not_exists(order_id)
 ```
 
 DynamoDB evaluates the condition and the write as one atomic step, so two orders
-racing for the last unit (try **Race: last unit** on the dashboard) cannot both
+racing for the last unit (try **Race for the last one** in the dashboard's Products tab) cannot both
 succeed: one completes, the other is rejected with `requested` vs `available`.
 The second condition makes the step idempotent: if Step Functions retries the
 task, the order already exists and stock is not decremented again.
@@ -207,7 +207,9 @@ Then seed (pass the region you deployed to):
 python scripts/seed.py --profile <your-profile> --region <region>
 ```
 
-Open `DashboardUrl` and click a store button. To start over at any time, click
+Open `DashboardUrl`: the **Live** tab shows the shelf, the order strip and the latest
+orders, **Products** has a sell button for every store, and **How it works** has the
+architecture. To start over at any time, click
 **Restock the demo** on the dashboard, or from the command line:
 
 ```bash

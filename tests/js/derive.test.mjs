@@ -142,3 +142,19 @@ test("data from an older version (no current store listings) is detected", () =>
   assert.equal(D.hasNoKnownListings([old, product("B", 3)]), false);
   assert.equal(D.pickSellOne([old]), null); // nothing to sell until restocked
 });
+
+test("tabs: hash to view, unknown hashes fall back to Live", () => {
+  assert.deepEqual(D.TABS, ["live", "products", "how"]);
+  assert.equal(D.tabFromHash("#products"), "products");
+  assert.equal(D.tabFromHash("how"), "how");
+  for (const h of ["", "#", "#nope", undefined, null]) assert.equal(D.tabFromHash(h), "live");
+});
+
+test("tabs: arrow keys wrap, Home and End jump, other keys do nothing", () => {
+  assert.equal(D.tabAfterKey("live", "ArrowRight"), "products");
+  assert.equal(D.tabAfterKey("how", "ArrowRight"), "live");
+  assert.equal(D.tabAfterKey("live", "ArrowLeft"), "how");
+  assert.equal(D.tabAfterKey("products", "Home"), "live");
+  assert.equal(D.tabAfterKey("products", "End"), "how");
+  assert.equal(D.tabAfterKey("live", "Enter"), null);
+});

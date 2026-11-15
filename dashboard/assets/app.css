@@ -159,25 +159,36 @@ button { font: inherit; color: inherit; }
 .banner .icon { color: var(--bad); }
 .banner p { flex: 1; }
 
+/* ── tabs: three views of the same live data ────────────────────── */
+.tabbar { position: sticky; top: var(--topbar); z-index: 19; background: var(--surface); border-bottom: 1px solid var(--rule); }
+.tabs { display: flex; gap: var(--s1); }
+.tab { border: 0; background: none; padding: 8px var(--s4); font: 500 15px var(--sans); color: var(--ink-3); cursor: pointer;
+  border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); }
+.tab:focus-visible { outline-offset: -2px; }
+
 /* ── page sections ───────────────────────────────────────────────── */
-main { padding-top: var(--s3); padding-bottom: 88px; display: grid; gap: var(--s3); } /* room for the corner demo button */
+main { padding-top: var(--s2); padding-bottom: 88px; } /* room for the corner demo button */
+.panel { display: grid; gap: var(--s2); }
+.panel:focus-visible { outline-offset: 4px; }
 section, .hero, .how { min-width: 0; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); margin-bottom: var(--s3); }
 .flow .section-head, .tryit .section-head { margin-bottom: var(--s2); }
 .hero, .flow, .tryit, .inventory, .activity > section, .how {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r2);
 }
-.flow, .tryit { padding: var(--s3) var(--s5); }
+.flow, .tryit { padding: var(--s2) var(--s5); }
 
 /* ── hero: one shelf, four shops (mirror-symmetric) ──────────────── */
-.hero { padding: var(--s3) var(--s5) 0; }
+.hero { padding: var(--s2) var(--s5) 0; }
 .hero__head { display: flex; align-items: baseline; justify-content: center; gap: var(--s3); text-align: center; flex-wrap: wrap; }
 .hero__lede { color: var(--ink-2); }
 .hero__aws { display: inline-flex; align-items: center; gap: var(--s1); padding: 1px var(--s2); border-radius: var(--r);
   font-size: 13px; font-weight: 500; color: var(--brand); background: var(--brand-tint); }
 .hero__aws .icon { width: 14px; height: 14px; }
 .shelf {
-  position: relative; margin-top: var(--s3);
+  position: relative; margin-top: var(--s2);
   display: grid; grid-template-columns: 1fr 1fr minmax(340px, 1.5fr) 1fr 1fr; gap: var(--s4); align-items: center;
 }
 /* The "wires" from the shelf to the shops: one hairline across, centred. */
@@ -189,7 +200,7 @@ section, .hero, .how { min-width: 0; }
 
 .shop {
   background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule-strong);
-  border-radius: var(--r); padding: 10px var(--s2); text-align: center;
+  border-radius: var(--r); padding: 8px var(--s2); text-align: center;
   display: grid; align-content: start; justify-items: center; gap: 2px;
   transition: background-color 280ms ease, border-color 280ms ease;
 }
@@ -219,7 +230,7 @@ section, .hero, .how { min-width: 0; }
 .shelf__meta { margin-left: auto; display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; align-self: center; }
 
 .summary {
-  margin: var(--s3) calc(-1 * var(--s5)) 0; padding: var(--s2) var(--s5);
+  margin: var(--s2) calc(-1 * var(--s5)) 0; padding: 6px var(--s5);
   border-top: 1px solid var(--rule); text-align: center; color: var(--ink-2);
 }
 .summary b { color: var(--ink); font-weight: 600; font-family: var(--mono); }
@@ -296,11 +307,11 @@ section, .hero, .how { min-width: 0; }
 .story:hover:not(:disabled) { border-color: var(--brand); }
 .story:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── columns ─────────────────────────────────────────────────────── */
-.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s3); align-items: start; }
+/* ── live: orders and warnings side by side ──────────────────────── */
+.activity { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--s3); align-items: start; }
+.activity > section { padding: var(--s2) var(--s5); }
+.activity .section-head { margin-bottom: var(--s2); }
 .inventory { padding: var(--s4) var(--s5); }
-.activity { position: sticky; top: calc(var(--topbar) + var(--s4)); display: grid; gap: var(--s4); }
-.activity > section { padding: var(--s4) var(--s5); }
 
 .segmented { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--r); overflow: hidden; }
 .segmented__btn { border: 0; border-left: 1px solid var(--rule-strong); background: var(--surface); padding: 4px var(--s3); font-size: 14px; cursor: pointer; color: var(--ink-2); }
@@ -358,7 +369,7 @@ section, .hero, .how { min-width: 0; }
 .order { border-top: 1px solid var(--rule); }
 .order:first-child { border-top: 0; }
 .order__btn { width: 100%; display: grid; grid-template-columns: 40px 1fr auto; gap: var(--s3); align-items: center;
-  padding: var(--s3) var(--s2); border: 0; border-left: 3px solid transparent; background: transparent; text-align: left; cursor: pointer; }
+  padding: 10px var(--s2); border: 0; border-left: 3px solid transparent; background: transparent; text-align: left; cursor: pointer; }
 .order__btn:hover { background: var(--sunken); }
 .order.is-focused .order__btn { background: var(--sunken); border-left-color: var(--ink-2); }
 .order.is-blocked .order__btn { border-left-color: var(--bad); }
@@ -386,11 +397,7 @@ section, .hero, .how { min-width: 0; }
 .empty { color: var(--ink-3); padding: var(--s3) 0; }
 
 /* ── how it works ────────────────────────────────────────────────── */
-.how summary { list-style: none; display: flex; align-items: baseline; gap: var(--s3); padding: var(--s4) var(--s5); cursor: pointer; font-weight: 600; }
-.how summary::-webkit-details-marker { display: none; }
-.how__chev { margin-left: auto; align-self: center; transition: transform 200ms ease; }
-.how[open] .how__chev { transform: rotate(180deg); }
-.how__body { padding: 0 var(--s5) var(--s5); border-top: 1px solid var(--rule); }
+.how__body { padding: var(--s2) var(--s5) var(--s5); }
 .arch-scroll { overflow-x: auto; margin: var(--s4) 0; }
 .arch { display: block; width: 100%; height: auto; }
 .arch-hint { display: none; margin: var(--s4) 0 0; }
@@ -438,8 +445,7 @@ section, .hero, .how { min-width: 0; }
   .topbar__actions { justify-content: end; }
 }
 @media (max-width: 900px) {
-  .cols { grid-template-columns: 1fr; }
-  .activity { position: static; order: -1; }
+  .activity { grid-template-columns: 1fr; }
   .orders { max-height: 420px; }
   .flow__steps { grid-template-columns: repeat(3, 1fr); row-gap: var(--s4); }
   .step:nth-child(4)::before { display: none; }
@@ -452,7 +458,8 @@ section, .hero, .how { min-width: 0; }
   .hero, .flow, .tryit, .inventory, .activity > section { padding-left: var(--s4); padding-right: var(--s4); }
   .summary { margin-left: calc(-1 * var(--s4)); margin-right: calc(-1 * var(--s4)); }
   .live #live-text { display: none; }
-  .topbar .btn--quiet { display: none; }
+  .tabs { gap: 0; }
+  .tab { flex: 1 1 0; padding: 10px var(--s2); text-align: center; }
   .shelf__core { grid-template-columns: 72px 1fr; }
   .shelf__img { width: 72px; height: 72px; }
   .shelf__num { font-size: 44px; }

@@ -12,8 +12,9 @@ Target length 2:30 (hard limit 3:00). Two windows side by side: the **dashboard*
 2. Warm the Lambdas so no cold start shows on camera: open **Try the demo**
    (bottom right), run "A customer in Germany buys one", wait until it says Sold,
    then open **Try the demo** again and choose **Restock the demo**.
-3. Check the shelf in the middle shows a product and the four Amazon stores
-   around it show the same number.
+3. Stay on the **Live** tab (the default; stories and sell buttons switch to it
+   anyway). Check the shelf in the middle shows a product and the four Amazon
+   stores around it show the same number.
 4. The video opens with the race, so it must be the first action after the
    restock. On a freshly restocked demo, **Two customers, one last item** picks
    the Cactus Art Print A4 (1 left) and sends two orders for it from two random
@@ -32,7 +33,7 @@ Target length 2:30 (hard limit 3:00). Two windows side by side: the **dashboard*
 | **1:05 – 1:30** | **Try the demo** → **A customer in Germany buys one**. The shelf number drops by one, the four stores update one after another, the flow strip fills in, and the order shows **Sold**. | "Now a normal sale. A customer in Germany buys one. API Gateway and a Lambda start the workflow: check the shelf, update all four stores in parallel, then convert the euro price to dollars with today's ECB rate, and save a receipt." |
 | **1:30 – 1:55** | In the console open that execution. Show the graph: ReserveStock → the four parallel **Push Amazon** branches → ConvertToUSD → IsStockLow → FinalizeOrder. Click **Push Amazon US** and show its output `request`. | "Four branches, one per Amazon store, run at the same time. Germany is skipped because Amazon already took its own sale off the shelf. The adapter runs in mock mode: it builds the real Selling Partner API call without sending it." |
 | **1:55 – 2:15** | **Try the demo** → **Sell until stock runs low** (it picks the Heart Keychain). The step **Low-stock warning** turns amber and the keychain appears under **Low-stock warnings**, next to the sold-out print from the race. | "This keychain was right at its warning level. One more sale and the workflow writes a low-stock warning straight from Step Functions to DynamoDB, no Lambda needed." |
-| **2:15 – 2:30** | Back to the whole dashboard; optionally open **Technical details**. | "Everything scales to zero: Lambda, Step Functions, DynamoDB on demand, S3 and CloudFront. No servers, no pipeline, one `sam deploy`." |
+| **2:15 – 2:30** | Back to the whole dashboard; optionally open the **How it works** tab. | "Everything scales to zero: Lambda, Step Functions, DynamoDB on demand, S3 and CloudFront. No servers, no pipeline, one `sam deploy`." |
 
 ## If you have spare seconds
 

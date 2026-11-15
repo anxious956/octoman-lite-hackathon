@@ -56,9 +56,6 @@
         <span class="live__dot" aria-hidden="true"></span>
         <span id="live-text">Connecting…</span>
       </span>
-      <button class="btn btn--icon" id="how-open" type="button" aria-label="Technical details" title="Technical details">
-        <svg class="icon" aria-hidden="true"><use href="#i-circle-help"/></svg>
-      </button>
       <button class="btn btn--icon" id="refresh" type="button" aria-label="Refresh now" title="Refresh now">
         <svg class="icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg>
       </button>
@@ -70,6 +67,16 @@
   </div>
 </header>
 
+<nav class="tabbar" aria-label="Views">
+  <div class="wrap">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" type="button" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="true">Live</button>
+      <button class="tab" type="button" role="tab" id="tab-products" data-tab="products" aria-controls="panel-products" aria-selected="false" tabindex="-1">Products</button>
+      <button class="tab" type="button" role="tab" id="tab-how" data-tab="how" aria-controls="panel-how" aria-selected="false" tabindex="-1">How it works</button>
+    </div>
+  </div>
+</nav>
+
 <div class="banner" id="banner" role="alert" hidden>
   <div class="wrap banner__in">
     <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
@@ -80,55 +87,37 @@
 
 <main id="main" class="wrap">
 
-  <!-- 1. The idea, as a picture: one shelf in the middle, two shops on each side. -->
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__head">
-      <h1 id="hero-title">One shelf, four stores</h1>
-      <p class="hero__lede">When one store sells, all four update.</p>
-      <p class="hero__aws"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Runs serverless on AWS</p>
-    </div>
-    <div class="shelf" id="shelf" aria-live="polite">
-      <div class="shop" data-market="AMAZON_US"></div>
-      <div class="shop" data-market="AMAZON_UK"></div>
-      <figure class="shelf__core" id="shelf-core">
-        <div class="skeleton skeleton--shelf" aria-hidden="true"></div>
-      </figure>
-      <div class="shop" data-market="AMAZON_DE"></div>
-      <div class="shop" data-market="AMAZON_TR"></div>
-    </div>
-    <p class="summary" id="summary"><span class="skeleton skeleton--line" aria-hidden="true"></span></p>
-  </section>
-
-  <!-- 2. Where the focused order is in the workflow. -->
-  <section class="flow" aria-labelledby="flow-title">
-    <div class="section-head">
-      <h2 id="flow-title">What happens to an order</h2>
-      <p class="flow__order" id="flow-order">Press Try the demo to start.</p>
-    </div>
-    <ol class="flow__steps" id="flow-steps"></ol>
-  </section>
-
-  <!-- 4. Working area: inventory on the left, what just happened on the right. -->
-  <div class="cols">
-    <section class="inventory" aria-labelledby="inv-title">
-      <div class="section-head">
-        <h2 id="inv-title">Inventory</h2>
-        <div class="segmented" role="group" aria-label="Show products">
-          <button type="button" class="segmented__btn" data-filter="all" aria-pressed="true">All</button>
-          <button type="button" class="segmented__btn" data-filter="low" aria-pressed="false">Running low</button>
-          <button type="button" class="segmented__btn" data-filter="out" aria-pressed="false">Sold out</button>
-        </div>
+  <div class="panel" id="panel-live" role="tabpanel" aria-labelledby="tab-live" tabindex="0">
+    <!-- 1. The idea, as a picture: one shelf in the middle, two shops on each side. -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__head">
+        <h1 id="hero-title">One shelf, four stores</h1>
+        <p class="hero__lede">When one store sells, all four update.</p>
+        <p class="hero__aws"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Runs serverless on AWS</p>
       </div>
-      <p class="inventory__hint muted small">Click a store to sell there.</p>
-      <ul class="products" id="products" aria-busy="true">
-        <li class="skeleton skeleton--row" aria-hidden="true"></li>
-        <li class="skeleton skeleton--row" aria-hidden="true"></li>
-        <li class="skeleton skeleton--row" aria-hidden="true"></li>
-      </ul>
-      <p class="empty" id="products-empty" hidden></p>
+      <div class="shelf" id="shelf" aria-live="polite">
+        <div class="shop" data-market="AMAZON_US"></div>
+        <div class="shop" data-market="AMAZON_UK"></div>
+        <figure class="shelf__core" id="shelf-core">
+          <div class="skeleton skeleton--shelf" aria-hidden="true"></div>
+        </figure>
+        <div class="shop" data-market="AMAZON_DE"></div>
+        <div class="shop" data-market="AMAZON_TR"></div>
+      </div>
+      <p class="summary" id="summary"><span class="skeleton skeleton--line" aria-hidden="true"></span></p>
     </section>
 
-    <aside class="activity" aria-label="Live activity">
+    <!-- 2. Where the focused order is in the workflow. -->
+    <section class="flow" aria-labelledby="flow-title">
+      <div class="section-head">
+        <h2 id="flow-title">What happens to an order</h2>
+        <p class="flow__order" id="flow-order">Press Try the demo to start.</p>
+      </div>
+      <ol class="flow__steps" id="flow-steps"></ol>
+    </section>
+
+    <!-- What just happened: orders and warnings side by side. -->
+    <div class="activity">
       <section aria-labelledby="orders-title">
         <div class="section-head">
           <h2 id="orders-title">Live orders</h2>
@@ -147,72 +136,88 @@
         <ul class="alerts" id="alerts"></ul>
         <p class="empty" id="alerts-empty" hidden>No warnings.</p>
       </section>
-    </aside>
+    </div>
   </div>
 
-  <!-- 5. For the curious (and the judges). -->
-  <details class="how" id="how">
-    <summary>
-      <span>Technical details</span>
-      <span class="muted small">How it works on AWS</span>
-      <svg class="icon how__chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-    </summary>
-    <div class="how__body">
-      <p class="arch-hint muted small">Scroll sideways to see the whole diagram.</p>
-      <div class="arch-scroll" tabindex="0" role="region" aria-label="Architecture diagram, scrolls sideways on small screens">
-        <svg class="arch" viewBox="0 0 960 336" role="img" aria-labelledby="arch-title arch-desc">
-          <title id="arch-title">Architecture</title>
-          <desc id="arch-desc">The browser calls an HTTP API. A Lambda function starts a Step Functions workflow that reserves stock in DynamoDB, updates the four Amazon stores in parallel, converts the total with ECB rates, raises low-stock warnings and saves a receipt to S3.</desc>
-          <g class="arch__box"><rect x="16" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="48" y="136" width="24" height="24" aria-hidden="true"/><image href="assets/img/aws/cloudfront.png" x="80" y="136" width="24" height="24" aria-hidden="true"/><text x="76" y="182">This page</text><text class="arch__cap" x="76" y="200">S3 + CloudFront</text></g>
-          <g class="arch__box"><rect x="176" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/api-gateway.png" x="220" y="132" width="32" height="32" aria-hidden="true"/><text x="236" y="182">HTTP API</text><text class="arch__cap" x="236" y="200">API Gateway</text></g>
-          <g class="arch__box"><rect x="336" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="380" y="132" width="32" height="32" aria-hidden="true"/><text x="396" y="182">Take the order</text><text class="arch__cap" x="396" y="200">Lambda</text></g>
-          <g class="arch__box arch__box--wide"><rect x="496" y="24" width="448" height="288" rx="4"/><image href="assets/img/aws/step-functions.png" x="508" y="34" width="24" height="24" aria-hidden="true"/><text class="arch__cap arch__cap--start" x="540" y="51">Step Functions workflow</text></g>
-          <g class="arch__box"><rect x="516" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="564" y="82" width="32" height="32" aria-hidden="true"/><text x="580" y="132">Check the shelf</text><text class="arch__cap" x="580" y="150">DynamoDB</text></g>
-          <g class="arch__box"><rect x="656" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="704" y="82" width="32" height="32" aria-hidden="true"/><text x="720" y="132">Update 4 stores</text><text class="arch__cap" x="720" y="150">in parallel</text></g>
-          <g class="arch__box"><rect x="796" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="844" y="82" width="32" height="32" aria-hidden="true"/><text x="860" y="132">Convert to $</text><text class="arch__cap" x="860" y="150">Lambda + ECB rates</text></g>
-          <g class="arch__box"><rect x="516" y="200" width="128" height="92" rx="4"/><text x="580" y="240">Blocked</text><text class="arch__cap" x="580" y="258">if not enough</text></g>
-          <g class="arch__box"><rect x="656" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="704" y="210" width="32" height="32" aria-hidden="true"/><text x="720" y="260">Low-stock</text><text class="arch__cap" x="720" y="278">DynamoDB</text></g>
-          <g class="arch__box"><rect x="796" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="844" y="210" width="32" height="32" aria-hidden="true"/><text x="860" y="260">Receipt</text><text class="arch__cap" x="860" y="278">S3</text></g>
-          <g class="arch__lines">
-            <path d="M136 168 H176 M296 168 H336 M456 168 H496 M644 118 H656 M784 118 H796 M580 164 V200 M860 164 V182 H720 V200 M784 246 H796"/>
-          </g>
-        </svg>
-      </div>
-      <h3>Steps and AWS services</h3>
-      <table class="steps-table">
-        <thead><tr><th scope="col">Step on the page</th><th scope="col">AWS service</th><th scope="col">What it does</th></tr></thead>
-        <tbody>
-          <tr><td>Order arrives</td><td>API Gateway + Lambda</td><td>Starts the workflow. A repeat cannot run twice.</td></tr>
-          <tr><td>Check the shelf</td><td>DynamoDB transaction</td><td>Takes units only if enough are left.</td></tr>
-          <tr><td>Update all 4 stores</td><td>Step Functions Parallel state</td><td>All four stores at once (mock mode).</td></tr>
-          <tr><td>Convert to dollars</td><td>Lambda + ECB rates</td><td>Today's European Central Bank rate.</td></tr>
-          <tr><td>Low-stock warning</td><td>DynamoDB</td><td>Warns below the warning level.</td></tr>
-          <tr><td>Save receipt</td><td>Lambda + S3</td><td>Stores a receipt, marks the order sold.</td></tr>
-        </tbody>
-      </table>
-      <div class="how__cols">
-        <div>
-          <h3>Why it cannot oversell</h3>
-          <ul class="ticks">
-            <li>One shelf number. No store keeps its own copy.</li>
-            <li>Checking and taking are one database step, so two orders cannot both get the last item.</li>
-            <li>An order that is too big is blocked. Nothing is sold.</li>
-          </ul>
-        </div>
-        <div>
-          <h3>About this demo</h3>
-          <ul class="ticks">
-            <li>Made-up products and orders.</li>
-            <li>Amazon requests are built but never sent (mock mode). No Amazon seller account is involved.</li>
-            <li>Costs nothing while nobody orders.</li>
-          </ul>
-          <p class="how__links">
-            <a href="https://github.com/anxious956/octoman-lite-hackathon" rel="noopener" target="_blank">Source code<svg class="icon" aria-hidden="true"><use href="#i-external-link"/></svg></a>
-          </p>
+  <div class="panel" id="panel-products" role="tabpanel" aria-labelledby="tab-products" tabindex="0" hidden>
+    <section class="inventory" aria-labelledby="inv-title">
+      <div class="section-head">
+        <h2 id="inv-title">Inventory</h2>
+        <div class="segmented" role="group" aria-label="Show products">
+          <button type="button" class="segmented__btn" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" class="segmented__btn" data-filter="low" aria-pressed="false">Running low</button>
+          <button type="button" class="segmented__btn" data-filter="out" aria-pressed="false">Sold out</button>
         </div>
       </div>
-    </div>
-  </details>
+      <p class="inventory__hint muted small">Click a store to sell there.</p>
+      <ul class="products" id="products" aria-busy="true">
+        <li class="skeleton skeleton--row" aria-hidden="true"></li>
+        <li class="skeleton skeleton--row" aria-hidden="true"></li>
+        <li class="skeleton skeleton--row" aria-hidden="true"></li>
+      </ul>
+      <p class="empty" id="products-empty" hidden></p>
+    </section>
+  </div>
+
+  <div class="panel" id="panel-how" role="tabpanel" aria-labelledby="tab-how" tabindex="0" hidden>
+    <section class="how">
+      <div class="how__body">
+        <p class="arch-hint muted small">Scroll sideways to see the whole diagram.</p>
+        <div class="arch-scroll" tabindex="0" role="region" aria-label="Architecture diagram, scrolls sideways on small screens">
+          <svg class="arch" viewBox="0 0 960 336" role="img" aria-labelledby="arch-title arch-desc">
+            <title id="arch-title">Architecture</title>
+            <desc id="arch-desc">The browser calls an HTTP API. A Lambda function starts a Step Functions workflow that reserves stock in DynamoDB, updates the four Amazon stores in parallel, converts the total with ECB rates, raises low-stock warnings and saves a receipt to S3.</desc>
+            <g class="arch__box"><rect x="16" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="48" y="136" width="24" height="24" aria-hidden="true"/><image href="assets/img/aws/cloudfront.png" x="80" y="136" width="24" height="24" aria-hidden="true"/><text x="76" y="182">This page</text><text class="arch__cap" x="76" y="200">S3 + CloudFront</text></g>
+            <g class="arch__box"><rect x="176" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/api-gateway.png" x="220" y="132" width="32" height="32" aria-hidden="true"/><text x="236" y="182">HTTP API</text><text class="arch__cap" x="236" y="200">API Gateway</text></g>
+            <g class="arch__box"><rect x="336" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="380" y="132" width="32" height="32" aria-hidden="true"/><text x="396" y="182">Take the order</text><text class="arch__cap" x="396" y="200">Lambda</text></g>
+            <g class="arch__box arch__box--wide"><rect x="496" y="24" width="448" height="288" rx="4"/><image href="assets/img/aws/step-functions.png" x="508" y="34" width="24" height="24" aria-hidden="true"/><text class="arch__cap arch__cap--start" x="540" y="51">Step Functions workflow</text></g>
+            <g class="arch__box"><rect x="516" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="564" y="82" width="32" height="32" aria-hidden="true"/><text x="580" y="132">Check the shelf</text><text class="arch__cap" x="580" y="150">DynamoDB</text></g>
+            <g class="arch__box"><rect x="656" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="704" y="82" width="32" height="32" aria-hidden="true"/><text x="720" y="132">Update 4 stores</text><text class="arch__cap" x="720" y="150">in parallel</text></g>
+            <g class="arch__box"><rect x="796" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="844" y="82" width="32" height="32" aria-hidden="true"/><text x="860" y="132">Convert to $</text><text class="arch__cap" x="860" y="150">Lambda + ECB rates</text></g>
+            <g class="arch__box"><rect x="516" y="200" width="128" height="92" rx="4"/><text x="580" y="240">Blocked</text><text class="arch__cap" x="580" y="258">if not enough</text></g>
+            <g class="arch__box"><rect x="656" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="704" y="210" width="32" height="32" aria-hidden="true"/><text x="720" y="260">Low-stock</text><text class="arch__cap" x="720" y="278">DynamoDB</text></g>
+            <g class="arch__box"><rect x="796" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="844" y="210" width="32" height="32" aria-hidden="true"/><text x="860" y="260">Receipt</text><text class="arch__cap" x="860" y="278">S3</text></g>
+            <g class="arch__lines">
+              <path d="M136 168 H176 M296 168 H336 M456 168 H496 M644 118 H656 M784 118 H796 M580 164 V200 M860 164 V182 H720 V200 M784 246 H796"/>
+            </g>
+          </svg>
+        </div>
+        <h3>Steps and AWS services</h3>
+        <table class="steps-table">
+          <thead><tr><th scope="col">Step on the page</th><th scope="col">AWS service</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr><td>Order arrives</td><td>API Gateway + Lambda</td><td>Starts the workflow. A repeat cannot run twice.</td></tr>
+            <tr><td>Check the shelf</td><td>DynamoDB transaction</td><td>Takes units only if enough are left.</td></tr>
+            <tr><td>Update all 4 stores</td><td>Step Functions Parallel state</td><td>All four stores at once (mock mode).</td></tr>
+            <tr><td>Convert to dollars</td><td>Lambda + ECB rates</td><td>Today's European Central Bank rate.</td></tr>
+            <tr><td>Low-stock warning</td><td>DynamoDB</td><td>Warns below the warning level.</td></tr>
+            <tr><td>Save receipt</td><td>Lambda + S3</td><td>Stores a receipt, marks the order sold.</td></tr>
+          </tbody>
+        </table>
+        <div class="how__cols">
+          <div>
+            <h3>Why it cannot oversell</h3>
+            <ul class="ticks">
+              <li>One shelf number. No store keeps its own copy.</li>
+              <li>Checking and taking are one database step, so two orders cannot both get the last item.</li>
+              <li>An order that is too big is blocked. Nothing is sold.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>About this demo</h3>
+            <ul class="ticks">
+              <li>Made-up products and orders.</li>
+              <li>Amazon requests are built but never sent (mock mode). No Amazon seller account is involved.</li>
+              <li>Costs nothing while nobody orders.</li>
+            </ul>
+            <p class="how__links">
+              <a href="https://github.com/anxious956/octoman-lite-hackathon" rel="noopener" target="_blank">Source code<svg class="icon" aria-hidden="true"><use href="#i-external-link"/></svg></a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
 
 <footer class="foot">

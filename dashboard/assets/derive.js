@@ -105,6 +105,28 @@ export function summary(orders, alerts) {
   };
 }
 
+// ── tabs ────────────────────────────────────────────────────────────
+
+/** The three views, in tab order. The first one is the default. */
+export const TABS = ["live", "products", "how"];
+
+/** Which tab a URL hash ("#products") asks for; anything unknown means the default. */
+export function tabFromHash(hash) {
+  const t = String(hash || "").replace(/^#/, "");
+  return TABS.includes(t) ? t : TABS[0];
+}
+
+/** The tab a key press moves to (standard tab keys), or null for any other key. */
+export function tabAfterKey(current, key) {
+  const n = TABS.length;
+  const i = Math.max(0, TABS.indexOf(current));
+  if (key === "ArrowRight") return TABS[(i + 1) % n];
+  if (key === "ArrowLeft") return TABS[(i - 1 + n) % n];
+  if (key === "Home") return TABS[0];
+  if (key === "End") return TABS[n - 1];
+  return null;
+}
+
 // ── flow strip ──────────────────────────────────────────────────────
 
 export const FLOW_STEPS = [

@@ -183,8 +183,10 @@ am building. It keeps one shared stock level (the "shelf") for four Amazon
 stores: the US, the UK, Germany and Türkiye. Every order checks the shelf
 first, so the last unit can only be sold once.
 
-The dashboard shows the shelf in the middle and the four stores around it. A
-"Try the demo" panel runs four short stories:
+The dashboard has three tabs. **Live** shows the shelf in the middle, the four
+stores around it, the order strip and the latest orders; **Products** lists every
+product with a sell button per store; **How it works** shows the architecture. A
+"Try the demo" panel, available on every tab, runs four short stories:
 
 - **A customer in Germany buys one.** The shelf drops by one and all four
   stores update, one after another.
@@ -310,13 +312,13 @@ CloudFront reads the same API.
 
 # Screenshots to attach
 
-1. The dashboard with the shared shelf and the four Amazon stores around it,
+1. The Live tab with the shared shelf and the four Amazon stores around it,
    right after a sale (all four stores showing the new number).
 2. A blocked order: the step strip stopped at "Check the shelf" in red with
    "Nobody was oversold", and the red-edged entry in Live orders.
 3. The Step Functions execution graph of a sale, with the four parallel
    "Push Amazon" branches, and of a blocked order ending in `OversellPrevented`.
-4. The "Technical details" section with the step-to-AWS-service table.
+4. The How it works tab with the diagram and the step-to-AWS-service table.
 
 # Video checklist (for the "demo" field)
 
@@ -335,8 +337,8 @@ CloudFront reads the same API.
   plain text. The challenge is run by AWS, but check whether that counts as a
   "third party trademark" under the Terms; if in doubt, ask before recording.
 - **Don't scroll to the page footer** while recording: it names the font,
-  flag and icon sets (IBM Plex, flag-icons, Lucide). In **Technical details**,
-  show the step-to-service table and the diagram, not the credits.
+  flag and icon sets (IBM Plex, flag-icons, Lucide). In the **How it works**
+  tab, show the diagram and the step-to-service table, not the credits.
 - Upload it as **public** on YouTube, Vimeo, Facebook Video or Youku.
 - Paste the link into the project's **"demo"** field, and replace `<VIDEO_URL>`
   above.

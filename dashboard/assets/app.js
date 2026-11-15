@@ -36,6 +36,7 @@ const state = {
   confirmRestock: false,
   resetting: false,
   restockRestUntil: 0,
+  tab: "live",
 };
 const prev = { listed: {}, stock: {}, shelfSku: null, shelfStock: null };
 
@@ -780,6 +781,7 @@ async function placeOrders(product, orders) {
 function sellFromRow(sku, marketplace) {
   const p = state.products.find((x) => x.sku === sku);
   if (!p) return;
+  showTab("live");
   const qty = state.qtyBySku[sku] || 1;
   const m = D.MARKET_BY_ID[marketplace];
   toast(`${m.name} orders ${qty} × ${p.title}`, "info");
@@ -789,6 +791,7 @@ function sellFromRow(sku, marketplace) {
 function raceFromRow(sku) {
   const p = state.products.find((x) => x.sku === sku);
   if (!p) return;
+  showTab("live");
   announceRace(p, D.raceOrders(p));
 }
 
@@ -797,6 +800,27 @@ function announceRace(p, orders) {
   const n = orders[0].quantity;
   toast(`${a} and ${b} both want ${n === 1 ? "the last" : `all ${n}`} × ${p.title}`, "info");
   placeOrders(p, orders);
+}
+
+// ── tabs ────────────────────────────────────────────────────────────
+/**
+ * Show one view. Only visibility changes: every panel keeps rendering from the same
+ * polled data, so a tab is never stale or empty when it opens.
+ */
+function showTab(name, { push = true } = {}) {
+  const changed = state.tab !== name;
+  state.tab = name;
+  for (const id of D.TABS) {
+    const on = id === name;
+    const tab = $(`tab-${id}`);
+    tab.setAttribute("aria-selected", String(on));
+    tab.tabIndex = on ? 0 : -1;
+    $(`panel-${id}`).hidden = !on;
+  }
+  if (push && location.hash !== `#${name}`) {
+    history.pushState(null, "", `${location.pathname}${location.search}#${name}`);
+  }
+  if (changed && window.scrollY > 0) window.scrollTo(0, 0);
 }
 
 // ── the corner demo panel ───────────────────────────────────────────
@@ -818,6 +842,7 @@ function closeDemo(returnFocus = true) {
 
 function runScenario(name) {
   closeDemo(false); // get out of the way so the visitor watches the shelf and the flow
+  showTab("live");
 
   const ps = state.products;
   if (name === "sell") {
@@ -884,12 +909,17 @@ function wire() {
   $("restock-no").addEventListener("click", cancelRestock);
   $("restock-yes").addEventListener("click", restock);
   $("restock-confirm").addEventListener("keydown", (e) => { if (e.key === "Escape") cancelRestock(); });
-  $("how-open").addEventListener("click", () => {
-    const how = $("how");
-    how.open = true;
-    how.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    how.querySelector("summary").focus({ preventScroll: true });
+  for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => showTab(b.dataset.tab));
+  $("tabs").addEventListener("keydown", (e) => {
+    const next = D.tabAfterKey(state.tab, e.key);
+    if (!next) return;
+    e.preventDefault();
+    showTab(next);
+    $(`tab-${next}`).focus();
   });
+  // Back/forward and edited hashes switch the view; the URL is the source of truth.
+  window.addEventListener("popstate", () => showTab(D.tabFromHash(location.hash), { push: false }));
+  window.addEventListener("hashchange", () => showTab(D.tabFromHash(location.hash), { push: false }));
   for (const b of document.querySelectorAll(".story")) b.addEventListener("click", () => runScenario(b.dataset.scenario));
   $("demo-open").addEventListener("click", () => ($("demo-panel").hidden ? openDemo() : closeDemo()));
   $("demo-close").addEventListener("click", () => closeDemo());
@@ -906,6 +936,13 @@ function wire() {
 }
 
 wire();
+// ?focus= always lands on Live; otherwise the hash picks the view. A hash that asked for
+// something else (or something unknown) is corrected in place, without a history entry.
+const initialTab = params.get("focus") ? "live" : D.tabFromHash(location.hash);
+showTab(initialTab, { push: false });
+if (location.hash && location.hash !== `#${initialTab}`) {
+  history.replaceState(null, "", `${location.pathname}${location.search}#${initialTab}`);
+}
 // View-only: ?demo=open opens the corner panel on load (handy for screenshots and links).
 if (params.get("demo") === "open") openDemo();
 if (!API) {

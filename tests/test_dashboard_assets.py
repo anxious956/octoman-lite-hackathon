@@ -95,6 +95,26 @@ def test_svg_images_in_the_page_are_local_and_exist():
         assert (DASHBOARD / href).is_file(), href
 
 
+def test_three_tabs_with_matching_panels():
+    html = (DASHBOARD / "index.html").read_text(encoding="utf-8")
+    assert 'role="tablist"' in html
+    tabs = re.findall(r'<button class="tab"[^>]*>', html)
+    assert len(tabs) == 3
+    for name in ("live", "products", "how"):
+        tab = next(t for t in tabs if f'data-tab="{name}"' in t)
+        assert 'role="tab"' in tab and f'aria-controls="panel-{name}"' in tab
+        panel = re.search(rf'<div class="panel" id="panel-{name}"[^>]*>', html).group(0)
+        assert 'role="tabpanel"' in panel and f'aria-labelledby="tab-{name}"' in panel
+        # Live is the only panel shown before the script runs.
+        assert ("hidden" in panel) == (name != "live")
+        assert ('aria-selected="true"' in tab) == (name == "live")
+
+
+def test_how_it_works_is_a_tab_not_a_collapsed_section():
+    html = (DASHBOARD / "index.html").read_text(encoding="utf-8")
+    assert "<details" not in html and "how-open" not in html
+
+
 def test_licence_texts_are_shipped():
     names = {p.name for p in (ASSETS / "licenses").iterdir()}
     assert {"OFL-IBM-Plex-Sans.txt", "OFL-IBM-Plex-Mono.txt", "MIT-flag-icons.txt", "ISC-lucide.txt"} <= names
