@@ -14,6 +14,8 @@ runtime. Full licence texts are in `licenses/`.
 | `fonts/ibm-plex-sans-latin-600-normal.woff2` | same | IBM Corp. | SIL OFL 1.1 |
 | `fonts/ibm-plex-mono-latin-400-normal.woff2` | https://www.npmjs.com/package/@fontsource/ibm-plex-mono (v5.1.0, Latin subset) | IBM Corp. | SIL Open Font License 1.1 (`licenses/OFL-IBM-Plex-Mono.txt`) |
 | `fonts/ibm-plex-mono-latin-500-normal.woff2` | same | IBM Corp. | SIL OFL 1.1 |
+| `fonts/ibm-plex-mono-latin-ext-400-normal.woff2` | same package, Latin Extended subset (used only for the ₺ sign) | IBM Corp. | SIL OFL 1.1 |
+| `fonts/ibm-plex-mono-latin-ext-500-normal.woff2` | same | IBM Corp. | SIL OFL 1.1 |
 
 ## Flags
 

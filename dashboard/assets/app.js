@@ -9,6 +9,7 @@ const BURST_MS = 20000;    // ... for 20 s after an action, then stop
 const STALE_MS = 30000;    // refresh once when the tab comes back after this long
 const BUSY_MS = 1000;      // order buttons rest for 1 s after a click
 const MAX_ORDERS_SHOWN = 25;
+const RESTOCK_REST_MS = 5000; // restock button rests for 5 s after a reset
 
 const cfg = window.OCTOMAN_LITE_CONFIG || {};
 const params = new URLSearchParams(location.search);
@@ -32,6 +33,9 @@ const state = {
   error: null,
   busyUntil: 0,
   pending: new Map(), // order_id -> accepted by the API, not yet in GET /orders
+  confirmRestock: false,
+  resetting: false,
+  restockRestUntil: 0,
 };
 const prev = { listed: {}, stock: {}, shelfSku: null, shelfStock: null };
 
@@ -354,8 +358,51 @@ function renderTryit() {
     b.disabled = !state.loaded || isBusy() || !picks[b.dataset.scenario];
   }
   setText($("try-hint"), soldOut
-    ? "Demo stock is sold out. It is reset from the command line (scripts/seed.py --reset)."
+    ? "Everything is sold out. Put the stock back?"
     : "Each button places real orders on this demo and picks a product for you.");
+  // Restock: a quiet secondary action, the primary one when nothing is left to sell.
+  document.querySelector(".tryit").classList.toggle("is-soldout", soldOut);
+  const restock = $("restock");
+  restock.classList.toggle("btn--brand", soldOut);
+  restock.disabled = !API || state.resetting || Date.now() < state.restockRestUntil;
+  restock.setAttribute("aria-expanded", String(state.confirmRestock));
+  $("restock-confirm").hidden = !state.confirmRestock;
+}
+
+// ── restock the demo (POST /demo/reset) ─────────────────────────────
+function askRestock() {
+  state.confirmRestock = true;
+  renderTryit();
+  $("restock-yes").focus();
+}
+
+function cancelRestock() {
+  state.confirmRestock = false;
+  renderTryit();
+  $("restock").focus();
+}
+
+async function restock() {
+  state.confirmRestock = false;
+  state.resetting = true;
+  renderTryit();
+  // No body and no custom headers: a simple request, no CORS preflight.
+  let res = await request("/demo/reset", { method: "POST" });
+  if (res.status === 200 && res.body && res.body.more) res = await request("/demo/reset", { method: "POST" });
+  state.resetting = false;
+  state.restockRestUntil = Date.now() + RESTOCK_REST_MS;
+  setTimeout(renderTryit, RESTOCK_REST_MS + 30);
+  if (res.status === 200) {
+    toast("Demo restocked: every product is back on the shelf and the order list is empty.", "ok");
+    state.focusedOrderId = null;
+    state.expandedOrderId = null;
+    state.lastSku = null;
+    state.pending.clear();
+    await refresh();
+  } else {
+    toast(res.status === 429 ? "The demo was just restocked. Try again in a moment." : messageFor(res), "bad");
+    renderTryit();
+  }
 }
 
 // ── render: inventory (keyed, updated in place) ─────────────────────
@@ -802,6 +849,10 @@ function wire() {
   $("refresh").addEventListener("click", () => refresh());
   $("banner-retry").addEventListener("click", () => refresh());
   $("theme").addEventListener("click", toggleTheme);
+  $("restock").addEventListener("click", () => (state.confirmRestock ? cancelRestock() : askRestock()));
+  $("restock-no").addEventListener("click", cancelRestock);
+  $("restock-yes").addEventListener("click", restock);
+  $("restock-confirm").addEventListener("keydown", (e) => { if (e.key === "Escape") cancelRestock(); });
   $("how-open").addEventListener("click", () => {
     const how = $("how");
     how.open = true;

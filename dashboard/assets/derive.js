@@ -129,7 +129,7 @@ export function flowStates(order, alerts = []) {
     const alert = alerts.find((a) => a.order_id === order.order_id);
     if (alert) {
       states[4] = "warned";
-      notes[4] = `Warning raised: ${alert.stock} left`;
+      notes[4] = Number(alert.stock) <= 0 ? "Warning raised: sold out" : `Warning raised: ${alert.stock} left`;
     } else {
       notes[4] = "Stock still fine";
     }

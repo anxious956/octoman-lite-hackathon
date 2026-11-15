@@ -110,7 +110,19 @@
   <section class="tryit" aria-labelledby="try-title">
     <div class="section-head">
       <h2 id="try-title">Try it</h2>
-      <p class="muted" id="try-hint">Each button places real orders on this demo and picks a product for you.</p>
+      <div class="tryit__aside">
+        <p class="muted" id="try-hint">Each button places real orders on this demo and picks a product for you.</p>
+        <button class="btn" id="restock" type="button" aria-controls="restock-confirm">
+          <svg class="icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg>Restock the demo
+        </button>
+      </div>
+    </div>
+    <div class="restock-confirm" id="restock-confirm" role="group" aria-labelledby="restock-q" hidden>
+      <p id="restock-q">Put all products back on the shelf and clear the order list? Anyone else using the demo will see it reset.</p>
+      <div class="restock-confirm__actions">
+        <button class="btn btn--quiet" id="restock-no" type="button">Cancel</button>
+        <button class="btn btn--brand" id="restock-yes" type="button">Yes, restock</button>
+      </div>
     </div>
     <div class="tryit__grid" id="tryit">
       <button class="story" type="button" data-scenario="sell">

@@ -13,6 +13,12 @@
   src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
 @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap;
   src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+/* Only the Turkish lira sign (₺) comes from the latin-ext subset; the browser loads
+   these small files only when that character is on screen (Türkiye prices). */
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-ext-400-normal.woff2") format("woff2"); unicode-range: U+20BA; }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-ext-500-normal.woff2") format("woff2"); unicode-range: U+20BA; }
 
 :root {
   color-scheme: light;
@@ -256,6 +262,13 @@ section, .hero, .how { min-width: 0; }
 @keyframes stop { from { transform: scale(1.25); } to { transform: none; } }
 
 /* ── try it ──────────────────────────────────────────────────────── */
+.tryit__aside { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; justify-content: flex-end; }
+.tryit__aside .btn { min-height: 32px; }
+.tryit.is-soldout #try-hint { color: var(--ink); font-weight: 500; }
+.restock-confirm { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s3);
+  padding: var(--s3); border: 1px solid var(--brand); border-radius: var(--r); background: var(--brand-tint); }
+.restock-confirm p { flex: 1; min-width: 240px; }
+.restock-confirm__actions { display: flex; gap: var(--s2); }
 .tryit__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s3); }
 .story {
   display: grid; grid-template-columns: 20px 1fr; column-gap: var(--s2); row-gap: 2px; align-content: start; text-align: left;
