@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import tempfile
 from pathlib import Path
 
 import boto3
@@ -58,15 +59,20 @@ def test_create_uploads_the_whole_site_recursively(s3):
     assert any(k.startswith("assets/fonts/") for k in keys)
 
 
-def test_deployer_and_junk_are_never_uploaded(tmp_path):
-    (tmp_path / "index.html").write_text("x")
-    (tmp_path / "deployer.py").write_text("x")
-    (tmp_path / ".hidden").write_text("x")
-    (tmp_path / "__pycache__").mkdir()
-    (tmp_path / "__pycache__" / "deployer.cpython-312.pyc").write_bytes(b"x")
-    (tmp_path / "assets" / "img").mkdir(parents=True)
-    (tmp_path / "assets" / "img" / "a.svg").write_text("x")
-    assert sorted(k for k, _ in deployer.site_files(str(tmp_path))) == ["assets/img/a.svg", "index.html"]
+def test_deployer_and_junk_are_never_uploaded():
+    # A private TemporaryDirectory, not pytest's tmp_path: tmp_path lives in a shared,
+    # numbered pytest-of-<user> folder that concurrent pytest sessions prune, which made
+    # this test error out now and then when two suites ran at the same time.
+    with tempfile.TemporaryDirectory(prefix="octoman-lite-deployer-") as d:
+        root = Path(d)
+        (root / "index.html").write_text("x")
+        (root / "deployer.py").write_text("x")
+        (root / ".hidden").write_text("x")
+        (root / "__pycache__").mkdir()
+        (root / "__pycache__" / "deployer.cpython-312.pyc").write_bytes(b"x")
+        (root / "assets" / "img").mkdir(parents=True)
+        (root / "assets" / "img" / "a.svg").write_text("x")
+        assert sorted(k for k, _ in deployer.site_files(str(root))) == ["assets/img/a.svg", "index.html"]
 
 
 @pytest.mark.parametrize("key,ctype,cache", [
