@@ -898,6 +898,8 @@ function wire() {
 }
 
 wire();
+// View-only: ?demo=open opens the corner panel on load (handy for screenshots and links).
+if (params.get("demo") === "open") openDemo();
 if (!API) {
   state.error = new Error("no api");
   setText($("banner-text"), "This page has no API address. Deploy it with sam deploy, or open it locally with ?api=<ApiUrl>.");

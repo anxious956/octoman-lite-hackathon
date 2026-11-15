@@ -442,7 +442,7 @@ section, .hero, .how { min-width: 0; }
   .hero, .flow, .tryit, .inventory, .activity > section { padding-left: var(--s4); padding-right: var(--s4); }
   .summary { margin-left: calc(-1 * var(--s4)); margin-right: calc(-1 * var(--s4)); }
   .live #live-text { display: none; }
-  .btn--quiet { display: none; }
+  .topbar .btn--quiet { display: none; }
   .shelf__core { grid-template-columns: 72px 1fr; }
   .shelf__img { width: 72px; height: 72px; }
   .shelf__num { font-size: 44px; }
