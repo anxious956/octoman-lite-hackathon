@@ -1,0 +1,375 @@
+{
+  "Comment": "OctoMan Lite order flow: reserve stock atomically, convert to USD, push the new level to every eBay site in parallel, raise a low-stock alert, save the receipt.",
+  "QueryLanguage": "JSONata",
+  "TimeoutSeconds": 300,
+  "StartAt": "ReserveStock",
+  "States": {
+    "ReserveStock": {
+      "Type": "Task",
+      "Comment": "Conditional DynamoDB transaction. Rejects the order instead of overselling.",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${ReserveStockFunctionArn}",
+        "Payload": "{% $states.input %}"
+      },
+      "Assign": {
+        "order": "{% $states.input.order %}",
+        "stock": "{% $states.result.Payload %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "TransientError",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["InsufficientStock", "UnknownSku"],
+          "Assign": {
+            "order": "{% $states.input.order %}",
+            "rejection": "{% $parse($parse($states.errorOutput.Cause).errorMessage) %}"
+          },
+          "Next": "RecordRejection"
+        }
+      ],
+      "Next": "ConvertToUSD"
+    },
+    "ConvertToUSD": {
+      "Type": "Task",
+      "Comment": "ECB reference rates; falls back to built-in rates and says so.",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${ConvertFxFunctionArn}",
+        "Payload": {
+          "order": "{% $order %}"
+        }
+      },
+      "Assign": {
+        "fx": "{% $states.result.Payload %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Comment": "FX must never block the stock push. Keep the original amount and say so.",
+          "Assign": {
+            "fx": {
+              "base_currency": "{% $order.currency %}",
+              "base_price": "{% $order.unit_price %}",
+              "base_total": "{% $order.total %}",
+              "fx_rate": "1",
+              "fx_source": "fallback_error",
+              "fx_date": ""
+            }
+          },
+          "Next": "PushToMarketplaces"
+        }
+      ],
+      "Next": "PushToMarketplaces"
+    },
+    "PushToMarketplaces": {
+      "Type": "Parallel",
+      "Comment": "One branch per eBay site. A failing site reports status=error instead of failing the order.",
+      "Branches": [
+        {
+          "StartAt": "Push eBay US",
+          "States": {
+            "Push eBay US": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${PushMarketplaceFunctionArn}",
+                "Payload": {
+                  "marketplace_id": "EBAY_US",
+                  "order": "{% $order %}",
+                  "stock": "{% $stock %}"
+                }
+              },
+              "Output": "{% $states.result.Payload %}",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Push eBay GB",
+          "States": {
+            "Push eBay GB": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${PushMarketplaceFunctionArn}",
+                "Payload": {
+                  "marketplace_id": "EBAY_GB",
+                  "order": "{% $order %}",
+                  "stock": "{% $stock %}"
+                }
+              },
+              "Output": "{% $states.result.Payload %}",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Push eBay DE",
+          "States": {
+            "Push eBay DE": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${PushMarketplaceFunctionArn}",
+                "Payload": {
+                  "marketplace_id": "EBAY_DE",
+                  "order": "{% $order %}",
+                  "stock": "{% $stock %}"
+                }
+              },
+              "Output": "{% $states.result.Payload %}",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Push eBay TR",
+          "States": {
+            "Push eBay TR": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${PushMarketplaceFunctionArn}",
+                "Payload": {
+                  "marketplace_id": "EBAY_TR",
+                  "order": "{% $order %}",
+                  "stock": "{% $stock %}"
+                }
+              },
+              "Output": "{% $states.result.Payload %}",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "End": true
+            }
+          }
+        }
+      ],
+      "Assign": {
+        "sync": "{% $states.result %}"
+      },
+      "Next": "IsStockLow"
+    },
+    "IsStockLow": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $stock.new_stock < $stock.threshold %}",
+          "Next": "RaiseLowStockAlert"
+        }
+      ],
+      "Default": "FinalizeOrder"
+    },
+    "RaiseLowStockAlert": {
+      "Type": "Task",
+      "Comment": "One alert row per SKU, overwritten with the latest level. Direct DynamoDB call, no Lambda.",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${AlertsTableName}",
+        "Item": {
+          "sku": { "S": "{% $stock.sku %}" },
+          "title": { "S": "{% $stock.title %}" },
+          "stock": { "N": "{% $string($stock.new_stock) %}" },
+          "threshold": { "N": "{% $string($stock.threshold) %}" },
+          "severity": { "S": "{% $stock.new_stock <= 0 ? 'OUT_OF_STOCK' : 'LOW' %}" },
+          "order_id": { "S": "{% $order.order_id %}" },
+          "marketplace": { "S": "{% $order.marketplace %}" },
+          "created_at": { "S": "{% $now() %}" },
+          "updated_at": { "S": "{% $now() %}" }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.ThrottlingException",
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.RequestLimitExceeded"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        },
+        {
+          "ErrorEquals": ["States.TaskFailed"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "FinalizeOrder"
+    },
+    "FinalizeOrder": {
+      "Type": "Task",
+      "Comment": "Receipt JSON to S3, order marked COMPLETED.",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${FinalizeOrderFunctionArn}",
+        "Payload": {
+          "order": "{% $order %}",
+          "stock": "{% $stock %}",
+          "fx": "{% $fx %}",
+          "sync": "{% $sync %}"
+        }
+      },
+      "Output": "{% $states.result.Payload %}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        },
+        {
+          "ErrorEquals": ["States.TaskFailed"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "End": true
+    },
+    "RecordRejection": {
+      "Type": "Task",
+      "Comment": "Store the rejected order (with requested vs available) so the dashboard shows it.",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${OrdersTableName}",
+        "Item": {
+          "order_id": { "S": "{% $order.order_id %}" },
+          "gsi_pk": { "S": "ORDERS" },
+          "created_at": { "S": "{% $order.created_at %}" },
+          "status": { "S": "REJECTED" },
+          "marketplace": { "S": "{% $order.marketplace %}" },
+          "sku": { "S": "{% $order.sku %}" },
+          "quantity": { "N": "{% $string($order.quantity) %}" },
+          "unit_price": { "N": "{% $order.unit_price %}" },
+          "currency": { "S": "{% $order.currency %}" },
+          "total": { "N": "{% $order.total %}" },
+          "reject_reason": { "S": "{% $rejection.reason %}" },
+          "requested": { "N": "{% $string($rejection.requested) %}" },
+          "available": { "N": "{% $string($rejection.available) %}" },
+          "rejected_at": { "S": "{% $now() %}" }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.ThrottlingException",
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.RequestLimitExceeded"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        },
+        {
+          "ErrorEquals": ["States.TaskFailed"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "OversellPrevented"
+    },
+    "OversellPrevented": {
+      "Type": "Fail",
+      "Comment": "Red end state on purpose: the execution graph shows exactly where the oversell was stopped.",
+      "Error": "{% $rejection.reason %}",
+      "Cause": "{% $order.sku & ': requested ' & $string($rejection.requested) & ', available ' & $string($rejection.available) & ' (order ' & $order.order_id & ' from ' & $order.marketplace & ')' %}"
+    }
+  }
+}

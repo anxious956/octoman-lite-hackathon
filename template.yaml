@@ -1,0 +1,580 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  OctoMan Lite - cross-marketplace oversell prevention.
+  One flat, fully serverless stack: HTTP API, Lambda, Step Functions,
+  DynamoDB (on-demand), S3 and CloudFront. Everything scales to zero.
+
+# ===============================================
+# PARAMETERS
+# ===============================================
+Parameters:
+  Prefix:
+    Type: String
+    Default: octoman-lite
+    AllowedPattern: '^octoman-lite(-[a-z0-9]{1,10})?$'
+    ConstraintDescription: Must be "octoman-lite" or "octoman-lite-<suffix>" (suffix 1-10 chars, a-z and 0-9).
+    Description: >
+      Prefix for every physical resource name. Locked to "octoman-lite..."
+      so this stack can never collide with other OctoMan environments.
+
+  MarketplaceMode:
+    Type: String
+    Default: mock
+    AllowedValues: [mock, live]
+    Description: >
+      mock = build the real eBay request but do not send it (default).
+      live = not available in OctoMan Lite (needs the OctoMan OAuth token store).
+
+  DefaultLowStockThreshold:
+    Type: Number
+    Default: 5
+    MinValue: 0
+    Description: Low-stock threshold for products that do not define their own.
+
+  ConsoleLinks:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: >
+      true = the dashboard links each order to its Step Functions execution
+      graph. This publishes the state machine ARN (which contains the AWS
+      account ID) in the dashboard config. Set false to hide it.
+
+Conditions:
+  ConsoleLinksEnabled: !Equals [!Ref ConsoleLinks, 'true']
+
+# ===============================================
+# GLOBALS
+# ===============================================
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [x86_64]
+    MemorySize: 256
+    Timeout: 10
+    Tags:
+      Application: octoman-lite
+    Environment:
+      Variables:
+        PRODUCTS_TABLE: !Sub '${Prefix}-products'
+        ORDERS_TABLE: !Sub '${Prefix}-orders'
+        ALERTS_TABLE: !Sub '${Prefix}-alerts'
+        DEFAULT_LOW_STOCK_THRESHOLD: !Ref DefaultLowStockThreshold
+        LOG_LEVEL: INFO
+
+Resources:
+
+  # ===============================================
+  # DYNAMODB (on-demand, no fixed cost)
+  # ===============================================
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Sub '${Prefix}-products'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sku
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sku
+          KeyType: HASH
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Sub '${Prefix}-orders'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: order_id
+          AttributeType: S
+        - AttributeName: gsi_pk
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: order_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        # Constant partition key + created_at sort key = "newest orders first".
+        # Fine for a demo; a multi-tenant system would partition by tenant.
+        - IndexName: by-created
+          KeySchema:
+            - AttributeName: gsi_pk
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Sub '${Prefix}-alerts'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sku
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sku
+          KeyType: HASH
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  # ===============================================
+  # S3 (receipts + dashboard, both private)
+  # ===============================================
+  ReceiptsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub '${Prefix}-receipts-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-demo-receipts
+            Status: Enabled
+            ExpirationInDays: 30
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  DashboardBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub '${Prefix}-dashboard-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  # Only this CloudFront distribution may read the dashboard bucket.
+  DashboardBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DashboardBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${DashboardBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${DashboardDistribution}'
+
+  # ===============================================
+  # CLOUDFRONT (HTTPS front door for the dashboard)
+  # ===============================================
+  DashboardOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${Prefix}-dashboard-${AWS::Region}'
+        Description: OctoMan Lite dashboard bucket access
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  DashboardDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${Prefix} dashboard'
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: dashboard-s3
+            DomainName: !GetAtt DashboardBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt DashboardOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: dashboard-s3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          Compress: true
+          # AWS managed policy "CachingDisabled": a redeploy shows up at once,
+          # no invalidation needed. Traffic is a handful of requests.
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+      Tags:
+        - Key: Application
+          Value: octoman-lite
+
+  # ===============================================
+  # HTTP API
+  # ===============================================
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: !Sub '${Prefix}-api'
+      Description: OctoMan Lite order ingestion and dashboard queries
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub 'https://${DashboardDistribution.DomainName}'
+          - http://localhost:8080
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [content-type]
+        MaxAge: 600
+      # Cost guard: the API is public and unauthenticated, so cap it.
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+  # ===============================================
+  # LAMBDA: API side
+  # ===============================================
+  IngestOrderLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-ingest-order'
+      RetentionInDays: 7
+
+  IngestOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-ingest-order'
+      Description: Validates POST /orders and starts the order-flow state machine.
+      CodeUri: src/
+      Handler: handlers.ingest_order.handler
+      LoggingConfig:
+        LogGroup: !Ref IngestOrderLogGroup
+      Environment:
+        Variables:
+          STATE_MACHINE_ARN: !Ref OrderFlowStateMachine
+      Policies:
+        - Statement:
+            - Sid: ReadProductForPrice
+              Effect: Allow
+              Action: dynamodb:GetItem
+              Resource: !GetAtt ProductsTable.Arn
+            - Sid: StartOrderFlow
+              Effect: Allow
+              Action: states:StartExecution
+              Resource: !Ref OrderFlowStateMachine
+      Events:
+        PostOrder:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: POST
+            Path: /orders
+            # Each order starts a workflow, so this route gets a tighter cap.
+            RouteSettings:
+              ThrottlingBurstLimit: 5
+              ThrottlingRateLimit: 1
+
+  QueryApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-query-api'
+      RetentionInDays: 7
+
+  QueryApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-query-api'
+      Description: Read-only GET /products, /orders and /alerts for the dashboard.
+      CodeUri: src/
+      Handler: handlers.query_api.handler
+      LoggingConfig:
+        LogGroup: !Ref QueryApiLogGroup
+      Policies:
+        - Statement:
+            - Sid: ListProductsAndAlerts
+              Effect: Allow
+              Action: dynamodb:Scan
+              Resource:
+                - !GetAtt ProductsTable.Arn
+                - !GetAtt AlertsTable.Arn
+            - Sid: NewestOrders
+              Effect: Allow
+              Action: dynamodb:Query
+              Resource: !Sub '${OrdersTable.Arn}/index/by-created'
+      Events:
+        GetProducts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /products
+        GetOrders:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /orders
+        GetAlerts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /alerts
+
+  # ===============================================
+  # LAMBDA: workflow tasks
+  # ===============================================
+  ReserveStockLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-reserve-stock'
+      RetentionInDays: 7
+
+  ReserveStockFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-reserve-stock'
+      Description: Atomic conditional stock decrement plus idempotent order record.
+      CodeUri: src/
+      Handler: handlers.reserve_stock.handler
+      LoggingConfig:
+        LogGroup: !Ref ReserveStockLogGroup
+      Policies:
+        - Statement:
+            - Sid: DecrementAndReadStock
+              Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+                - dynamodb:GetItem
+              Resource: !GetAtt ProductsTable.Arn
+            - Sid: CreateOrderOnce
+              Effect: Allow
+              Action: dynamodb:PutItem
+              Resource: !GetAtt OrdersTable.Arn
+
+  ConvertFxLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-convert-fx'
+      RetentionInDays: 7
+
+  # No AWS permissions beyond its own logs: it only calls the public ECB feed.
+  ConvertFxFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-convert-fx'
+      Description: Converts the order total to USD with ECB reference rates.
+      CodeUri: src/
+      Handler: handlers.convert_fx.handler
+      LoggingConfig:
+        LogGroup: !Ref ConvertFxLogGroup
+
+  PushMarketplaceLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-push-marketplace'
+      RetentionInDays: 7
+
+  PushMarketplaceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-push-marketplace'
+      Description: Pushes the new stock level to one marketplace (mock adapter by default).
+      CodeUri: src/
+      Handler: handlers.push_marketplace.handler
+      LoggingConfig:
+        LogGroup: !Ref PushMarketplaceLogGroup
+      Environment:
+        Variables:
+          MARKETPLACE_MODE: !Ref MarketplaceMode
+      Policies:
+        - Statement:
+            - Sid: UpdateListingCopy
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource: !GetAtt ProductsTable.Arn
+
+  FinalizeOrderLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-finalize-order'
+      RetentionInDays: 7
+
+  FinalizeOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-finalize-order'
+      Description: Writes the receipt JSON to S3 and marks the order COMPLETED.
+      CodeUri: src/
+      Handler: handlers.finalize_order.handler
+      LoggingConfig:
+        LogGroup: !Ref FinalizeOrderLogGroup
+      Environment:
+        Variables:
+          RECEIPTS_BUCKET: !Ref ReceiptsBucket
+      Policies:
+        - Statement:
+            - Sid: WriteReceipt
+              Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub '${ReceiptsBucket.Arn}/receipts/*'
+            - Sid: CompleteOrder
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource: !GetAtt OrdersTable.Arn
+
+  # ===============================================
+  # STEP FUNCTIONS
+  # ===============================================
+  OrderFlowStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: !Sub '${Prefix}-order-flow'
+      Type: STANDARD
+      DefinitionUri: statemachine/order_flow.asl.json
+      DefinitionSubstitutions:
+        ReserveStockFunctionArn: !GetAtt ReserveStockFunction.Arn
+        ConvertFxFunctionArn: !GetAtt ConvertFxFunction.Arn
+        PushMarketplaceFunctionArn: !GetAtt PushMarketplaceFunction.Arn
+        FinalizeOrderFunctionArn: !GetAtt FinalizeOrderFunction.Arn
+        OrdersTableName: !Ref OrdersTable
+        AlertsTableName: !Ref AlertsTable
+      Policies:
+        - Statement:
+            - Sid: InvokeTaskFunctions
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource:
+                - !GetAtt ReserveStockFunction.Arn
+                - !GetAtt ConvertFxFunction.Arn
+                - !GetAtt PushMarketplaceFunction.Arn
+                - !GetAtt FinalizeOrderFunction.Arn
+            - Sid: WriteRejectionsAndAlerts
+              Effect: Allow
+              Action: dynamodb:PutItem
+              Resource:
+                - !GetAtt OrdersTable.Arn
+                - !GetAtt AlertsTable.Arn
+      Tags:
+        Application: octoman-lite
+
+  # ===============================================
+  # DASHBOARD DEPLOYMENT (custom resource)
+  # Uploads index.html + a generated config.js during `sam deploy`, and
+  # empties both buckets on stack delete so `sam delete` works.
+  # ===============================================
+  DeployDashboardLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Prefix}-deploy-dashboard'
+      RetentionInDays: 7
+
+  DeployDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-deploy-dashboard'
+      Description: Custom resource that publishes the static dashboard to S3.
+      CodeUri: dashboard/
+      Handler: deployer.handler
+      Timeout: 60
+      # A new version is published whenever dashboard/ changes; the custom
+      # resource below references it, so CloudFormation re-runs the upload.
+      AutoPublishAlias: live
+      LoggingConfig:
+        LogGroup: !Ref DeployDashboardLogGroup
+      Policies:
+        - Statement:
+            - Sid: PublishDashboard
+              Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub '${DashboardBucket.Arn}/*'
+            - Sid: ListBucketsForCleanup
+              Effect: Allow
+              Action: s3:ListBucket
+              Resource:
+                - !GetAtt DashboardBucket.Arn
+                - !GetAtt ReceiptsBucket.Arn
+            - Sid: EmptyBucketsOnDelete
+              Effect: Allow
+              Action: s3:DeleteObject
+              Resource:
+                - !Sub '${DashboardBucket.Arn}/*'
+                - !Sub '${ReceiptsBucket.Arn}/*'
+
+  DashboardDeployment:
+    Type: Custom::DashboardDeployment
+    DependsOn: DashboardBucketPolicy
+    Properties:
+      ServiceToken: !GetAtt DeployDashboardFunction.Arn
+      ServiceTimeout: 120
+      DashboardBucket: !Ref DashboardBucket
+      ReceiptsBucket: !Ref ReceiptsBucket
+      ApiUrl: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+      Region: !Ref AWS::Region
+      StateMachineArn: !If [ConsoleLinksEnabled, !Ref OrderFlowStateMachine, '']
+      CodeVersion: !Ref DeployDashboardFunction.Version
+
+# ===============================================
+# OUTPUTS
+# ===============================================
+Outputs:
+  ApiUrl:
+    Description: Base URL of the HTTP API (POST /orders, GET /products, /orders, /alerts)
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+
+  DashboardUrl:
+    Description: Dashboard URL (CloudFront, HTTPS)
+    Value: !Sub 'https://${DashboardDistribution.DomainName}'
+
+  StateMachineArn:
+    Description: Order-flow state machine (open it in the console to watch executions)
+    Value: !Ref OrderFlowStateMachine
+
+  ProductsTableName:
+    Description: DynamoDB products table (seed it with scripts/seed.py)
+    Value: !Ref ProductsTable
+
+  OrdersTableName:
+    Description: DynamoDB orders table
+    Value: !Ref OrdersTable
+
+  AlertsTableName:
+    Description: DynamoDB low-stock alerts table
+    Value: !Ref AlertsTable
+
+  ReceiptsBucketName:
+    Description: S3 bucket holding one receipt JSON per completed order
+    Value: !Ref ReceiptsBucket

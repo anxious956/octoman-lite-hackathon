@@ -1,0 +1,5 @@
+# Local tests only. The Lambdas themselves need nothing beyond the
+# Python 3.12 runtime (boto3 is built in), so there is no requirements.txt.
+boto3>=1.34
+moto[dynamodb,s3,stepfunctions]>=5.0
+pytest>=8.0

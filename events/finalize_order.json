@@ -1,0 +1,76 @@
+{
+  "order": {
+    "order_id": "DE-sample-0001",
+    "marketplace": "EBAY_DE",
+    "sku": "OCTO-MUG-001",
+    "quantity": 2,
+    "unit_price": "14.90",
+    "currency": "EUR",
+    "total": "29.80",
+    "created_at": "2026-11-15T10:00:00.000Z"
+  },
+  "stock": {
+    "sku": "OCTO-MUG-001",
+    "title": "Octopus Ceramic Mug",
+    "new_stock": 4,
+    "stock_version": 7,
+    "threshold": 5,
+    "offers": {
+      "EBAY_US": "MOCK-OFFER-US-001",
+      "EBAY_GB": "MOCK-OFFER-GB-001",
+      "EBAY_DE": "MOCK-OFFER-DE-001",
+      "EBAY_TR": "MOCK-OFFER-TR-001"
+    },
+    "idempotent_replay": false
+  },
+  "fx": {
+    "base_currency": "USD",
+    "base_price": "16.47",
+    "base_total": "32.93",
+    "fx_rate": "1.105200",
+    "fx_source": "ECB",
+    "fx_date": "2026-11-13"
+  },
+  "sync": [
+    {
+      "channel": "EBAY",
+      "marketplace_id": "EBAY_US",
+      "external_id": "MOCK-OFFER-US-001",
+      "quantity": 4,
+      "mode": "mock",
+      "status": "ok",
+      "detail": "",
+      "request": null
+    },
+    {
+      "channel": "EBAY",
+      "marketplace_id": "EBAY_GB",
+      "external_id": "MOCK-OFFER-GB-001",
+      "quantity": 4,
+      "mode": "mock",
+      "status": "ok",
+      "detail": "",
+      "request": null
+    },
+    {
+      "channel": "EBAY",
+      "marketplace_id": "EBAY_DE",
+      "external_id": "MOCK-OFFER-DE-001",
+      "quantity": 4,
+      "mode": "mock",
+      "status": "skipped",
+      "detail": "",
+      "request": null
+    },
+    {
+      "channel": "EBAY",
+      "marketplace_id": "EBAY_TR",
+      "external_id": "MOCK-OFFER-TR-001",
+      "quantity": 4,
+      "mode": "mock",
+      "status": "ok",
+      "detail": "",
+      "request": null
+    }
+  ]
+}

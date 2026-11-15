@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OctoMan Lite</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #5f6b7a; --line: #e3e7ec;
+    --accent: #3b5bdb; --accent-text: #ffffff; --ok: #2b8a3e; --ok-bg: #e6f4ea;
+    --warn: #b35c00; --warn-bg: #fff4e5; --bad: #c92a2a; --bad-bg: #fdecec; --flash: #fff3bf;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151a; --panel: #1b2027; --text: #e6e9ee; --muted: #9aa5b4; --line: #2c333d;
+      --accent: #748ffc; --accent-text: #0b0d10; --ok: #69db7c; --ok-bg: #1d3324;
+      --warn: #ffa94d; --warn-bg: #3a2a16; --bad: #ff8787; --bad-bg: #3b1e1e; --flash: #4a4220;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+           display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 18px; margin: 0; }
+  h1 small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  main { padding: 16px 20px; display: grid; gap: 16px; grid-template-columns: 1fr; max-width: 1400px; margin: 0 auto; }
+  @media (min-width: 1100px) { main { grid-template-columns: 3fr 2fr; } #products { grid-column: 1 / -1; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.low td.stock { color: var(--warn); font-weight: 700; }
+  tr.out td.stock { color: var(--bad); font-weight: 700; }
+  .mp { font-variant-numeric: tabular-nums; }
+  .mp .qty { font-weight: 600; }
+  .mp .price { color: var(--muted); font-size: 12px; display: block; }
+  .flash { animation: flash 2.5s ease-out; }
+  @keyframes flash { from { background: var(--flash); } to { background: transparent; } }
+  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+           border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.race { border-color: var(--bad); color: var(--bad); }
+  button:disabled { opacity: .5; cursor: default; }
+  .actions { display: flex; gap: 4px; align-items: center; }
+  input[type=number] { width: 52px; font: inherit; padding: 3px 4px; border: 1px solid var(--line);
+                       border-radius: 6px; background: var(--panel); color: var(--text); }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .COMPLETED { background: var(--ok-bg); color: var(--ok); }
+  .RESERVED { background: var(--warn-bg); color: var(--warn); }
+  .REJECTED, .OUT_OF_STOCK { background: var(--bad-bg); color: var(--bad); }
+  .LOW { background: var(--warn-bg); color: var(--warn); }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  td.wrap { white-space: normal; min-width: 220px; }
+  #status { min-height: 20px; }
+  #log { margin: 0; padding: 0; list-style: none; max-height: 140px; overflow-y: auto; }
+  #log li { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .setup { padding: 20px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>OctoMan Lite <small>cross-marketplace oversell prevention</small></h1>
+  <div class="actions">
+    <span id="status" class="muted small"></span>
+    <button id="refresh" class="primary" type="button">Refresh</button>
+  </div>
+</header>
+
+<main id="app">
+  <section id="products">
+    <h2>Products <span class="muted small">(central stock is the single source of truth; each eBay column is the quantity last pushed to that site)</span></h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th><th>Product</th><th class="num">Stock</th><th class="num">Threshold</th>
+            <th>eBay US</th><th>eBay GB</th><th>eBay DE</th><th>eBay TR</th>
+            <th>Qty</th><th>Simulate order on</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="product-rows"><tr><td colspan="11" class="muted">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Recent orders</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Order</th><th>Site</th><th>SKU</th><th class="num">Qty</th>
+              <th class="num">Total</th><th class="num">USD</th><th>Status</th><th>Detail</th></tr>
+        </thead>
+        <tbody id="order-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Low-stock alerts</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>SKU</th><th>Product</th><th class="num">Stock</th><th class="num">Threshold</th><th>Severity</th><th>Last order</th><th>Updated</th></tr></thead>
+        <tbody id="alert-rows"></tbody>
+      </table>
+    </div>
+    <h2 style="margin-top:16px">Activity</h2>
+    <ul id="log" class="small"></ul>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const MARKETS = ["EBAY_US", "EBAY_GB", "EBAY_DE", "EBAY_TR"];
+  const SHORT = { EBAY_US: "US", EBAY_GB: "GB", EBAY_DE: "DE", EBAY_TR: "TR" };
+  const POLL_MS = 2000, POLL_FOR_MS = 20000;
+
+  // API URL comes from config.js (written at deploy time). ?api=<url> is only
+  // honoured when testing locally or when no config exists, so nobody can craft
+  // a link that makes the real dashboard show data from another server.
+  const cfg = window.OCTOMAN_LITE_CONFIG || {};
+  const params = new URLSearchParams(location.search);
+  const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
+  const override = (isLocal || !cfg.apiUrl) ? params.get("api") : null;
+  const API = (override || cfg.apiUrl || "").replace(/\/+$/, "");
+  const SM_ARN = cfg.stateMachineArn || "";
+  const REGION = cfg.region || "";
+
+  let lastListed = {};      // "SKU|MP" -> listed_qty, to flash changed cells
+  let lastStock = {};       // SKU -> stock_on_hand
+  let pollUntil = 0, pollTimer = null;
+
+  // ── tiny DOM helpers (textContent only: API data is never parsed as HTML) ──
+  function el(tag, opts, children) {
+    const node = document.createElement(tag);
+    if (opts) {
+      if (opts.text !== undefined) node.textContent = String(opts.text);
+      if (opts.cls) node.className = opts.cls;
+      if (opts.title) node.title = opts.title;
+      if (opts.attrs) for (const [k, v] of Object.entries(opts.attrs)) node.setAttribute(k, v);
+      if (opts.on) for (const [k, v] of Object.entries(opts.on)) node.addEventListener(k, v);
+    }
+    (children || []).forEach(c => c && node.appendChild(c));
+    return node;
+  }
+  function td(text, cls) { return el("td", { text: text === undefined || text === null ? "" : text, cls }); }
+  function money(v) { return typeof v === "number" ? v.toFixed(2) : (v || ""); }
+  function ago(iso) {
+    if (!iso) return "";
+    const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+    if (s < 60) return s + "s ago";
+    if (s < 3600) return Math.round(s / 60) + "m ago";
+    return new Date(iso).toLocaleString();
+  }
+  function log(msg, cls) {
+    const li = el("li", { text: new Date().toLocaleTimeString() + "  " + msg, cls });
+    const ul = document.getElementById("log");
+    ul.insertBefore(li, ul.firstChild);
+    while (ul.children.length > 30) ul.removeChild(ul.lastChild);
+  }
+  function setStatus(msg) { document.getElementById("status").textContent = msg; }
+
+  async function api(path, opts) {
+    // Only POST sends a JSON content-type: on GET it would force a CORS
+    // preflight on every poll and double the requests against the throttle.
+    opts = opts || {};
+    if (opts.body) opts.headers = { "content-type": "application/json" };
+    const resp = await fetch(API + path, opts);
+    let body = null;
+    try { body = await resp.json(); } catch (e) { body = null; }
+    return { status: resp.status, body };
+  }
+
+  function executionUrl(orderId) {
+    if (!SM_ARN || !REGION) return "";
+    const execArn = SM_ARN.replace(":stateMachine:", ":execution:") + ":" + orderId;
+    return "https://" + REGION + ".console.aws.amazon.com/states/home?region=" + REGION +
+           "#/v2/executions/details/" + encodeURIComponent(execArn);
+  }
+
+  // ── rendering ──
+  function renderProducts(products) {
+    const tbody = document.getElementById("product-rows");
+    tbody.textContent = "";
+    if (!products.length) {
+      tbody.appendChild(el("tr", null, [el("td", { text: "No products yet. Run: python scripts/seed.py", cls: "muted", attrs: { colspan: "11" } })]));
+      return;
+    }
+    const nextListed = {}, nextStock = {};
+    for (const p of products) {
+      const stock = p.stock_on_hand;
+      const row = el("tr", { cls: stock <= 0 ? "out" : (p.low_stock ? "low" : "") });
+      row.appendChild(td(p.sku));
+      row.appendChild(td(p.title));
+      const stockCell = td(stock, "num stock");
+      if (p.sku in lastStock && lastStock[p.sku] !== stock) stockCell.classList.add("flash");
+      nextStock[p.sku] = stock;
+      row.appendChild(stockCell);
+      row.appendChild(td(p.low_stock_threshold, "num"));
+
+      for (const mp of MARKETS) {
+        const l = (p.listings || {})[mp];
+        const cell = el("td", { cls: "mp" });
+        if (!l) { cell.textContent = "not listed"; cell.classList.add("muted"); row.appendChild(cell); continue; }
+        const key = p.sku + "|" + mp;
+        cell.appendChild(el("span", { cls: "qty", text: l.listed_qty }));
+        cell.appendChild(el("span", { cls: "price", text: money(l.price) + " " + l.currency + " · " + (l.sync_status || "") }));
+        cell.title = "offer " + l.offer_id + (l.last_synced_at ? " · synced " + ago(l.last_synced_at) : "");
+        if (key in lastListed && lastListed[key] !== l.listed_qty) cell.classList.add("flash");
+        nextListed[key] = l.listed_qty;
+        row.appendChild(cell);
+      }
+
+      const qty = el("input", { attrs: { type: "number", min: "1", max: "100", value: "1", "aria-label": "Quantity for " + p.sku } });
+      row.appendChild(el("td", null, [qty]));
+
+      const buttons = el("div", { cls: "actions" });
+      for (const mp of MARKETS) {
+        if (!(p.listings || {})[mp]) continue;
+        buttons.appendChild(el("button", {
+          text: SHORT[mp], title: "Simulate an order for " + p.sku + " on eBay " + SHORT[mp],
+          attrs: { type: "button" },
+          on: { click: () => placeOrder(mp, p.sku, parseInt(qty.value, 10) || 1) }
+        }));
+      }
+      row.appendChild(el("td", null, [buttons]));
+      row.appendChild(el("td", null, [el("button", {
+        text: "Race: last unit", cls: "race", attrs: { type: "button" },
+        title: "Send two orders at the same moment (eBay US and eBay DE), each for all remaining stock. Only one can win.",
+        on: { click: () => race(p.sku, Math.max(1, stock)) }
+      })]));
+      tbody.appendChild(row);
+    }
+    lastListed = nextListed;
+    lastStock = nextStock;
+  }
+
+  function renderOrders(orders) {
+    const tbody = document.getElementById("order-rows");
+    tbody.textContent = "";
+    if (!orders.length) {
+      tbody.appendChild(el("tr", null, [el("td", { text: "No orders yet. Click a site button above.", cls: "muted", attrs: { colspan: "9" } })]));
+      return;
+    }
+    for (const o of orders) {
+      const row = el("tr");
+      row.appendChild(td(ago(o.created_at), "small"));
+      const url = executionUrl(o.order_id);
+      const idCell = el("td");
+      if (url) idCell.appendChild(el("a", { text: o.order_id, attrs: { href: url, target: "_blank", rel: "noopener" }, title: "Open the Step Functions execution graph" }));
+      else idCell.textContent = o.order_id;
+      row.appendChild(idCell);
+      row.appendChild(td(SHORT[o.marketplace] || o.marketplace));
+      row.appendChild(td(o.sku));
+      row.appendChild(td(o.quantity, "num"));
+      row.appendChild(td(money(o.total) + " " + (o.currency || ""), "num"));
+      // Only show a USD figure when the amount really was converted to USD.
+      row.appendChild(td(o.base_total !== undefined && o.base_currency === "USD" ? money(o.base_total) : "", "num"));
+      row.appendChild(el("td", null, [el("span", { cls: "badge " + o.status, text: o.status })]));
+      let detail = "";
+      if (o.status === "REJECTED") {
+        detail = (o.reject_reason || "REJECTED") + ": requested " + o.requested + ", available " + o.available;
+      } else if (o.status === "COMPLETED") {
+        const s = o.sync_summary || {};
+        detail = "stock → " + o.stock_after + " · pushed " + (s.synced || 0) + ", skipped " + (s.skipped || 0) +
+                 (s.errored ? ", errors " + s.errored : "") + " · FX " + (o.fx_source || "") + " " + (o.fx_date || "");
+      } else {
+        detail = "workflow running…";
+      }
+      row.appendChild(td(detail, "small wrap"));
+      tbody.appendChild(row);
+    }
+  }
+
+  function renderAlerts(alerts) {
+    const tbody = document.getElementById("alert-rows");
+    tbody.textContent = "";
+    if (!alerts.length) {
+      tbody.appendChild(el("tr", null, [el("td", { text: "No low-stock alerts.", cls: "muted", attrs: { colspan: "7" } })]));
+      return;
+    }
+    for (const a of alerts) {
+      const row = el("tr");
+      row.appendChild(td(a.sku));
+      row.appendChild(td(a.title));
+      row.appendChild(td(a.stock, "num"));
+      row.appendChild(td(a.threshold, "num"));
+      row.appendChild(el("td", null, [el("span", { cls: "badge " + a.severity, text: a.severity })]));
+      row.appendChild(td((a.order_id || "") + " (" + (SHORT[a.marketplace] || a.marketplace || "") + ")", "small"));
+      row.appendChild(td(ago(a.updated_at), "small"));
+      tbody.appendChild(row);
+    }
+  }
+
+  // ── data loading + polling ──
+  async function refresh() {
+    try {
+      const [p, o, a] = await Promise.all([api("/products"), api("/orders?limit=25"), api("/alerts")]);
+      if (p.status !== 200 || o.status !== 200 || a.status !== 200) throw new Error("API returned " + [p.status, o.status, a.status].join("/"));
+      renderProducts(p.body.products || []);
+      renderOrders(o.body.orders || []);
+      renderAlerts(a.body.alerts || []);
+      setStatus("Updated " + new Date().toLocaleTimeString());
+    } catch (e) {
+      setStatus("Could not reach the API: " + e.message);
+    }
+  }
+
+  function pollForAWhile() {
+    pollUntil = Date.now() + POLL_FOR_MS;
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      await refresh();
+      if (Date.now() > pollUntil) { clearInterval(pollTimer); pollTimer = null; }
+    }, POLL_MS);
+  }
+
+  async function placeOrder(mp, sku, quantity) {
+    log("POST /orders " + SHORT[mp] + " " + sku + " x" + quantity + " …");
+    try {
+      const r = await api("/orders", { method: "POST", body: JSON.stringify({ marketplace: mp, sku, quantity }) });
+      if (r.status === 202) log("Accepted " + r.body.order_id + " (" + r.body.total + " " + r.body.currency + ")");
+      else {
+        // Our Lambda returns {"errors": [...]}; API Gateway throttling (429) returns {"message": "..."}.
+        const b = r.body || {};
+        const why = (b.errors && b.errors.join("; ")) || b.message ||
+                    (r.status === 429 ? "throttled: max 1 order per second" : "");
+        log("HTTP " + r.status + ": " + why, "muted");
+      }
+    } catch (e) {
+      log("Request failed: " + e.message, "muted");
+    }
+    pollForAWhile();
+  }
+
+  async function race(sku, quantity) {
+    log("RACE: eBay US and eBay DE both order " + quantity + " x " + sku + " at the same moment");
+    await Promise.all([placeOrder("EBAY_US", sku, quantity), placeOrder("EBAY_DE", sku, quantity)]);
+  }
+
+  // ── start ──
+  if (!API) {
+    const app = document.getElementById("app");
+    app.textContent = "";
+    app.appendChild(el("section", { cls: "setup" }, [
+      el("h2", { text: "API URL not configured" }),
+      el("p", { text: "When deployed with sam deploy, config.js sets it automatically. To run this page locally, open it as index.html?api=<ApiUrl output of the stack>." })
+    ]));
+    return;
+  }
+  document.getElementById("refresh").addEventListener("click", refresh);
+  refresh();
+})();
+</script>
+</body>
+</html>

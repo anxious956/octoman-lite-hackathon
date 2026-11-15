@@ -1,0 +1,12 @@
+{
+  "order": {
+    "order_id": "DE-sample-0001",
+    "marketplace": "EBAY_DE",
+    "sku": "OCTO-MUG-001",
+    "quantity": 2,
+    "unit_price": "14.90",
+    "currency": "EUR",
+    "total": "29.80",
+    "created_at": "2026-11-15T10:00:00.000Z"
+  }
+}

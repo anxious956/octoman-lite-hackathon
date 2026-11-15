@@ -1,0 +1,21 @@
+# SAM CLI defaults for OctoMan Lite. No secrets live here.
+# `sam deploy --guided` shows these as the default answers; keep the
+# stack name "octoman-lite" so no other stack can be updated by mistake.
+version = 0.1
+
+[default.global.parameters]
+stack_name = "octoman-lite"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+s3_prefix = "octoman-lite"
+parameter_overrides = "Prefix=\"octoman-lite\" MarketplaceMode=\"mock\" DefaultLowStockThreshold=\"5\" ConsoleLinks=\"true\""
