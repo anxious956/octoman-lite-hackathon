@@ -2,8 +2,8 @@
 
 **Cross-marketplace oversell prevention on a fully serverless AWS stack.**
 One order flow, end to end: an order arrives from Amazon US, UK, DE or TR, stock
-is reserved atomically, the total is converted to USD with ECB reference rates,
-the new stock level is pushed to every other Amazon store in parallel, a low-stock
+is reserved atomically, the new stock level is pushed to every other Amazon store
+in parallel, the total is converted to USD with ECB reference rates, a low-stock
 alert is raised when needed, and a receipt is saved to S3.
 
 No servers, no CI/CD pipeline. Deployment is `sam build && sam deploy --guided`.
@@ -41,10 +41,7 @@ POST /orders  {"marketplace": "DE", "sku": "OCTO-LAMP-004", "quantity": 1}
    `stock_on_hand` **only if** `stock_on_hand >= quantity`, and create the order
    **only if** it does not exist yet. If stock is short, the order is recorded as
    `REJECTED` and the execution ends in the red `OversellPrevented` state.
-3. **ConvertToUSD** (Lambda) converts the total with the ECB daily reference
-   rates, falling back to built-in rates (and labelling them as such) if the
-   feed is unreachable.
-4. **PushToMarketplaces** (Parallel state, one branch per Amazon store) pushes the
+3. **PushToMarketplaces** (Parallel state, one branch per Amazon store) pushes the
    new quantity through the marketplace adapter. In the default **mock mode** the
    adapter builds the exact Amazon Selling Partner API request (Listings Items
    `PATCH /listings/2021-08-01/items/{sellerId}/{sku}` on the right regional
@@ -52,6 +49,10 @@ POST /orders  {"marketplace": "DE", "sku": "OCTO-LAMP-004", "quantity": 1}
    `fulfillment_availability`) and returns it without sending it, so no Amazon
    seller account or credentials are needed. The request is visible in the
    execution graph.
+4. **ConvertToUSD** (Lambda) converts the total with the ECB daily reference
+   rates, falling back to built-in rates (and labelling them as such) if the
+   feed is unreachable. It runs after the push, so a slow rate feed never delays
+   a stock update.
 5. **IsStockLow → RaiseLowStockAlert**: if the new stock is below the product's
    threshold, an alert row is written straight from Step Functions to DynamoDB
    (no Lambda).
@@ -92,11 +93,11 @@ flowchart LR
 
     subgraph SFN[Step Functions: order flow, Standard, JSONata]
       direction TB
-      R[ReserveStock] -->|ok| FX[ConvertToUSD]
+      R[ReserveStock] -->|ok| PAR{{PushToMarketplaces<br/>Amazon US · UK · DE · TR}}
       R -->|InsufficientStock / UnknownSku| REJ[RecordRejection]
       REJ --> FAIL([OversellPrevented])
-      FX --> PAR{{PushToMarketplaces<br/>Amazon US · UK · DE · TR}}
-      PAR --> LOW{IsStockLow}
+      PAR --> FX[ConvertToUSD]
+      FX --> LOW{IsStockLow}
       LOW -->|yes| ALR[RaiseLowStockAlert]
       LOW -->|no| FIN[FinalizeOrder]
       ALR --> FIN
@@ -119,7 +120,7 @@ flowchart LR
 | Service | Role |
 |---|---|
 | **API Gateway (HTTP API)** | `POST /orders`, `GET /products`, `GET /orders`, `GET /alerts`, `POST /demo/reset`. CORS limited to the dashboard. Throttled: 10 rps by default, `POST /orders` 1 rps, `POST /demo/reset` 1 rps (burst 2). |
-| **AWS Lambda** (Python 3.12, 7 functions + 1 custom resource) | Validation, reservation, FX, marketplace push, receipt, queries, demo reset. No third-party packages. |
+| **AWS Lambda** (Python 3.12, 7 functions + 1 custom resource) | Validation, reservation, marketplace push, FX, receipt, queries, demo reset. No third-party packages. |
 | **AWS Step Functions** (Standard, JSONata) | Orchestrates the order flow; Parallel state fans out to the four marketplaces; Catch turns an oversell into a recorded rejection; direct DynamoDB integrations for the two single-write steps. |
 | **Amazon DynamoDB** (on-demand) | `products` (single source of truth for stock + per-store listing copy), `orders` (GSI for newest first), `alerts` (one row per SKU). |
 | **Amazon S3** | Private receipts bucket (30-day expiry) and private dashboard bucket. |
@@ -356,10 +357,10 @@ projects:
   interface OctoMan uses for Amazon, so a live adapter is a drop-in replacement.
   Live mode is intentionally not available here: it needs OAuth tokens per
   seller, which belong in a token store this demo does not include.
-- **Order of steps.** FX conversion runs before the marketplace push. The shelf
-  itself can never oversell, because the reservation is one transaction; the order
-  of the two later steps only affects how long the other stores still show the old
-  number (at most the FX timeout of 3 s longer). Pushing first would shorten that.
+- **Order of steps.** Stock goes out to the stores first; the price conversion,
+  which calls an outside feed, runs afterwards. A slow or unreachable rate feed
+  can therefore never delay a stock update, and if it fails the order still
+  completes with the original amount, clearly labelled as not converted.
 - **The marketplace is the origin of truth for its own sale.** The store that sold
   the item already decremented its listing, so its branch only updates the local
   copy (`status: skipped`).

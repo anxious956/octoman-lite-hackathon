@@ -110,8 +110,8 @@ export function summary(orders, alerts) {
 export const FLOW_STEPS = [
   { key: "in", name: "Order arrives", caption: "API Gateway + Lambda", icon: "shopping-bag" },
   { key: "shelf", name: "Check the shelf", caption: "DynamoDB transaction", icon: "package" },
-  { key: "fx", name: "Convert to dollars", caption: "Lambda + ECB rates", icon: "circle-dollar-sign" },
   { key: "shops", name: "Update all 4 stores", caption: "Step Functions Parallel", icon: "store" },
+  { key: "fx", name: "Convert to dollars", caption: "Lambda + ECB rates", icon: "circle-dollar-sign" },
   { key: "low", name: "Low-stock warning", caption: "DynamoDB", icon: "triangle-alert" },
   { key: "receipt", name: "Save receipt", caption: "S3", icon: "receipt" },
 ];
@@ -123,6 +123,7 @@ export const FLOW_STEPS = [
  */
 export function flowStates(order, alerts = []) {
   const n = FLOW_STEPS.length;
+  const at = (key) => FLOW_STEPS.findIndex((s) => s.key === key);
   const notes = Array(n).fill("");
   if (!order) return { states: Array(n).fill("waiting"), notes };
   if (order.pending) {
@@ -131,20 +132,20 @@ export function flowStates(order, alerts = []) {
   if (order.status === "REJECTED") {
     const wanted = Number(order.requested ?? order.quantity) || 0;
     const left = Number(order.available) || 0;
-    notes[1] = `Stopped here. ${wanted} wanted, ${left} left. Nobody was oversold.`;
+    notes[at("shelf")] = `Stopped here. ${wanted} wanted, ${left} left. Nobody was oversold.`;
     return { states: ["done", "blocked", "skipped", "skipped", "skipped", "skipped"], notes };
   }
   if (order.status === "COMPLETED") {
     const states = Array(n).fill("done");
     const alert = alerts.find((a) => a.order_id === order.order_id);
     if (alert) {
-      states[4] = "warned";
-      notes[4] = Number(alert.stock) <= 0 ? "Warning raised: sold out" : `Warning raised: ${alert.stock} left`;
+      states[at("low")] = "warned";
+      notes[at("low")] = Number(alert.stock) <= 0 ? "Warning raised: sold out" : `Warning raised: ${alert.stock} left`;
     } else {
-      notes[4] = "Stock still fine";
+      notes[at("low")] = "Stock still fine";
     }
     const s = order.sync_summary || {};
-    notes[3] = `${s.synced ?? 0} updated, ${s.skipped ?? 0} already knew`;
+    notes[at("shops")] = `${s.synced ?? 0} updated, ${s.skipped ?? 0} already knew`;
     return { states, notes };
   }
   return { states: ["done", "done", "running", "running", "running", "running"], notes };

@@ -1,5 +1,5 @@
 {
-  "Comment": "OctoMan Lite order flow: reserve stock atomically, convert to USD, push the new level to every Amazon store in parallel, raise a low-stock alert, save the receipt.",
+  "Comment": "OctoMan Lite order flow: reserve stock atomically, push the new level to every Amazon store in parallel, convert to USD, raise a low-stock alert, save the receipt.",
   "QueryLanguage": "JSONata",
   "TimeoutSeconds": 300,
   "StartAt": "ReserveStock",
@@ -41,7 +41,7 @@
           "Next": "RecordRejection"
         }
       ],
-      "Next": "ConvertToUSD"
+      "Next": "PushToMarketplaces"
     },
     "ConvertToUSD": {
       "Type": "Task",
@@ -73,7 +73,7 @@
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],
-          "Comment": "FX must never block the stock push. Keep the original amount and say so.",
+          "Comment": "FX must never fail the order. Keep the original amount and say so.",
           "Assign": {
             "fx": {
               "base_currency": "{% $order.currency %}",
@@ -84,10 +84,10 @@
               "fx_date": ""
             }
           },
-          "Next": "PushToMarketplaces"
+          "Next": "IsStockLow"
         }
       ],
-      "Next": "PushToMarketplaces"
+      "Next": "IsStockLow"
     },
     "PushToMarketplaces": {
       "Type": "Parallel",
@@ -229,7 +229,7 @@
       "Assign": {
         "sync": "{% $states.result %}"
       },
-      "Next": "IsStockLow"
+      "Next": "ConvertToUSD"
     },
     "IsStockLow": {
       "Type": "Choice",

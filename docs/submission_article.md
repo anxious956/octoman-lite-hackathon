@@ -61,10 +61,11 @@ it was stopped if it was blocked.
 
 An HTTP API (Amazon API Gateway) sends each order to an AWS Lambda function that
 starts an AWS Step Functions workflow named after the order. One conditional
-Amazon DynamoDB transaction reserves the stock or blocks the order; a Lambda
-converts the price to US dollars with ECB rates; a Parallel state updates the
-four stores at once; a low-stock warning is written straight to DynamoDB; and a
-Lambda saves a receipt to Amazon S3. The dashboard is a static site in a private
+Amazon DynamoDB transaction reserves the stock or blocks the order; a Parallel
+state updates the four stores at once; then a Lambda converts the price to US
+dollars with ECB rates, so a slow rate feed never holds up a stock update; a
+low-stock warning is written straight to DynamoDB; and a Lambda saves a receipt
+to Amazon S3. The dashboard is a static site in a private
 S3 bucket behind Amazon CloudFront. The architecture diagram is attached
 (`docs/architecture.png`).
 
@@ -124,7 +125,7 @@ The SAM template is one flat file meant to be copied, and the README has a
 ### Scope
 
 One flow, end to end: an order comes in, stock is reserved or the order is
-blocked, the price is converted, all four stores are updated, a warning is
+blocked, all four stores are updated, the price is converted, a warning is
 raised if stock is low, and a receipt is saved. Marketplace calls are mock: the
 real Amazon Selling Partner API request is built, and is visible in the
 workflow's output for each store, but never sent, and
@@ -206,13 +207,15 @@ the demo" puts every product back. All products and orders are made-up data.
    order id, so an order cannot run twice.
 2. **Check the shelf:** a Lambda function runs one DynamoDB transaction that
    takes the units off the shelf and records the order.
-3. **Convert to dollars:** a Lambda function converts the local price to US
-   dollars with the European Central Bank's daily reference rates.
-4. **Update all 4 stores:** a Step Functions Parallel state pushes the new
+3. **Update all 4 stores:** a Step Functions Parallel state pushes the new
    quantity to the four stores at the same time. The marketplace calls are
    mock: the adapter builds the real Amazon Selling Partner API request (a
    Listings Items PATCH) but never sends it, so no seller account or
    credentials are involved.
+4. **Convert to dollars:** a Lambda function converts the local price to US
+   dollars with the European Central Bank's daily reference rates. It runs
+   after the stores are updated, so a slow rate feed never delays a stock
+   update.
 5. **Low-stock warning:** if stock falls below the product's warning level,
    Step Functions writes a warning straight to DynamoDB, no Lambda needed.
 6. **Save receipt:** a Lambda function stores a receipt JSON in S3 and marks
@@ -300,8 +303,8 @@ template using `sam build` and `sam deploy`, no pipeline.
 
 An HTTP API sends each order to a Lambda that starts a Step Functions workflow
 named after the order. One conditional DynamoDB transaction reserves the stock
-or blocks the order. Then a Lambda converts the total to US dollars, a Parallel
-state updates four mock Amazon stores at once, a low-stock warning is written
+or blocks the order. Then a Parallel state updates four mock Amazon stores at
+once, a Lambda converts the total to US dollars, a low-stock warning is written
 directly to DynamoDB, and a receipt goes to S3. A static dashboard on S3 and
 CloudFront reads the same API.
 

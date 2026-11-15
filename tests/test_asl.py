@@ -128,10 +128,20 @@ def test_rejected_orders_are_visible_in_get_orders(asl):
     assert "created_at" in item and item["status"] == {"S": "REJECTED"}
 
 
-def test_fx_failure_does_not_block_the_stock_push(asl):
+def test_stores_are_updated_before_the_currency_conversion(asl):
+    # Stock goes out first; the FX call (an outside feed) can never delay it.
+    states = asl["States"]
+    assert states["ReserveStock"]["Next"] == "PushToMarketplaces"
+    assert states["PushToMarketplaces"]["Next"] == "ConvertToUSD"
+    assert states["ConvertToUSD"]["Next"] == "IsStockLow"
+    branch_args = json.dumps([b["States"] for b in states["PushToMarketplaces"]["Branches"]])
+    assert "$fx" not in branch_args, "the store push must not depend on the conversion"
+
+
+def test_fx_failure_does_not_fail_the_order(asl):
     (catch,) = asl["States"]["ConvertToUSD"]["Catch"]
     assert catch["ErrorEquals"] == ["States.ALL"]
-    assert catch["Next"] == "PushToMarketplaces"
+    assert catch["Next"] == "IsStockLow"
     fx = catch["Assign"]["fx"]
     assert fx["fx_source"] == "fallback_error"
     # Unconverted amounts keep their own currency label; they are never called USD.

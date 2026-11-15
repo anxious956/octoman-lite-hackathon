@@ -43,6 +43,19 @@ test("flow strip: completed order, with and without a low-stock warning", () => 
   assert.match(warned.notes[4], /4 left/);
 });
 
+test("flow strip follows the workflow: stores are updated before the conversion", () => {
+  assert.deepEqual(D.FLOW_STEPS.map((s) => s.key), ["in", "shelf", "shops", "fx", "low", "receipt"]);
+  const order = { order_id: "o1", status: "COMPLETED", sync_summary: { synced: 3, skipped: 1 } };
+  assert.equal(D.flowStates(order, []).notes[2], "3 updated, 1 already knew");
+});
+
+test("flow strip: an order whose conversion fell back still shows every step done", () => {
+  const order = { order_id: "o2", status: "COMPLETED", currency: "EUR", fx_source: "fallback_error",
+    base_currency: "EUR", base_total: "11.99", sync_summary: { synced: 3, skipped: 1 } };
+  assert.deepEqual(D.flowStates(order, []).states, Array(6).fill("done"));
+  assert.equal(D.usdTotal(order), null);
+});
+
 test("flow strip: accepted but not yet stored, and still processing", () => {
   assert.deepEqual(D.flowStates({ pending: true }).states.slice(0, 2), ["done", "running"]);
   assert.deepEqual(D.flowStates({ status: "RESERVED" }).states, ["done", "done", "running", "running", "running", "running"]);

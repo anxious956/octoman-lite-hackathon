@@ -6,7 +6,7 @@ Working notes for the OctoMan Lite hackathon build (AWS Builder Center
 ## Scope
 
 One flow, end to end: POST /orders -> Step Functions (reserve stock ->
-convert to USD -> push to Amazon US/UK/DE/TR in parallel -> low-stock alert ->
+push to Amazon US/UK/DE/TR in parallel -> convert to USD -> low-stock alert ->
 receipt in S3), plus GET /products, /orders, /alerts and a static dashboard.
 Out of scope: auth and multi-tenancy, error tracking, CI/CD, nested stacks,
 rate limiting beyond API Gateway throttling, circuit breakers, payments, other
@@ -47,8 +47,14 @@ Press **Restock the demo** on the dashboard once.
   IsStockLow, RaiseLowStockAlert and FinalizeOrder, and after the FX catch was
   added, ConvertToUSD (success; function error and timeout both caught with the
   `fallback_error` fx and routed to PushToMarketplaces; FinalizeOrder accepts that
-  fx). Nothing was invoked or created.
-- Deployed stack: a sale in Germany was converted to dollars at the ECB rate
+  fx). Nothing was invoked or created. These runs used the previous step order
+  (conversion before the push).
+- Step order changed afterwards: the stores are now updated first and the
+  conversion runs after them; its catch now routes to IsStockLow. Checked
+  locally only (unit tests, `sam validate --lint`, `sam build`); not yet run
+  through ValidateStateMachineDefinition or on a deployed stack.
+- Deployed stack (made with the previous step order; repeat after the next
+  redeploy): a sale in Germany was converted to dollars at the ECB rate
   and all four stores were handled; the last-item race gave one sale and one
   block; an order for more than the stock was blocked; a low-stock warning was
   raised; the dashboard was served through CloudFront with its config written by
@@ -61,6 +67,8 @@ Press **Restock the demo** on the dashboard once.
 
 - Standard workflow: the execution graph is the demo; execution name = order id.
 - One DynamoDB transaction for "check and decrement" + "create order once".
+- Stores are updated before the currency conversion: the conversion calls an
+  outside feed, so a slow feed must never delay a stock update.
 - `stock_version` guards each site's listing copy against stale pushes.
 - Mock marketplace adapter by default; same `update_inventory` signature as the
   real adapter; live mode deliberately unavailable.

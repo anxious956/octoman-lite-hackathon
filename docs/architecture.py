@@ -56,8 +56,8 @@ NODES = {
     "ingest": (520, 470, "lambda", ["IngestOrder"], "below"),
     "start": (720, 470, "step-functions", ["Execution", "name = order_id"], "below"),
     "reserve": (895, 470, "lambda", ["ReserveStock"], "below"),
-    "fx": (1070, 470, "lambda", ["ConvertToUSD"], "below"),
-    "push": (1260, 470, "lambda", ["PushToMarketplaces", "Parallel: Amazon US · UK · DE · TR"], "below"),
+    "push": (1070, 470, "lambda", ["PushToMarketplaces", "Parallel: US · UK · DE · TR"], "below"),
+    "fx": (1260, 470, "lambda", ["ConvertToUSD"], "below"),
     "alert": (1610, 470, "dynamodb-item", ["RaiseLowStockAlert", "direct putItem"], "below"),
     "finalize": (1790, 470, "lambda", ["FinalizeOrder"], "below"),
     "reject": (895, 620, "dynamodb-item", ["RecordRejection", "direct putItem"], "below"),
@@ -65,8 +65,8 @@ NODES = {
     "orders": (1000, 230, "dynamodb", ["orders"], "right"),
     "products": (1260, 230, "dynamodb", ["products"], "right"),
     "alerts": (1610, 230, "dynamodb", ["alerts"], "right"),
-    "ecb": (1070, 905, "internet-alt1", ["ECB daily", "reference rates"], "below"),
-    "amazon_api": (1260, 905, "internet-alt1", ["Amazon Selling Partner API", "request built, not sent"], "below"),
+    "amazon_api": (1070, 905, "internet-alt1", ["Amazon Selling Partner API", "request built, not sent"], "below"),
+    "ecb": (1260, 905, "internet-alt1", ["ECB daily", "reference rates"], "below"),
 }
 DIAMOND = (1440, 470, 110, 64, "IsStockLow?")
 FAIL_PILL = (895, 735, 156, 28, "OversellPrevented")
@@ -77,7 +77,7 @@ GROUPS = [
     (40, 60, 190, 515, "Client", 52, 80, "start", BORDER),
     (630, 400, 1870, 795, "AWS Step Functions: order flow (Standard, JSONata)", 645, 782, "start", PINK),
     (940, 150, 1720, 290, "Amazon DynamoDB (on-demand)", 1435, 175, "middle", BORDER),
-    (990, 830, 1350, 985, "External (not AWS)", 1165, 852, "middle", BORDER),
+    (950, 830, 1350, 985, "External (not AWS)", 1150, 852, "middle", BORDER),
 ]
 
 # ---------------------------------------------------------------- edges
@@ -100,18 +100,18 @@ EDGES = [
     ("flow", [(1495, 470), (1578, 470)], ["yes"], 1536, 461, "middle"),
     ("flow", [(1642, 470), (1758, 470)], [], 0, 0, ""),
     ("flow", [(1440, 502), (1440, 585), (1790, 585), (1790, 530)], ["no"], 1615, 576, "middle"),
-    ("fail", [(895, 526), (895, 588)], ["InsufficientStock /", "UnknownSku"], 905, 552, "start"),
+    ("fail", [(895, 526), (895, 588)], ["InsufficientStock /", "UnknownSku"], 905, 562, "start"),
     ("fail", [(895, 690), (895, 721)], [], 0, 0, ""),
     # data access
     ("data", [(880, 438), (880, 310), (990, 310), (990, 262)], ["create once"], 935, 301, "middle"),
     ("data", [(910, 438), (910, 340), (1245, 340), (1245, 262)], ["conditional transaction"], 1078, 331, "middle"),
     ("data", [(863, 620), (800, 620), (800, 230), (968, 230)], ["putItem"], 884, 221, "middle"),
-    ("data", [(1275, 438), (1275, 262)], ["listing copy"], 1284, 305, "start"),
+    ("data", [(1085, 438), (1085, 370), (1275, 370), (1275, 262)], ["listing copy"], 1180, 361, "middle"),
     ("data", [(1610, 438), (1610, 262)], ["putItem"], 1619, 305, "start"),
     ("data", [(1790, 438), (1790, 55), (1012, 55), (1012, 198)], ["COMPLETED"], 1400, 46, "middle"),
     ("data", [(1822, 470), (1958, 470)], ["receipt"], 1890, 461, "middle"),
-    ("data", [(1070, 532), (1070, 873)], ["HTTPS"], 1079, 812, "start"),
-    ("data", [(1260, 545), (1260, 873)], ["mock adapter"], 1269, 812, "start"),
+    ("data", [(1070, 545), (1070, 873)], ["mock adapter"], 1079, 812, "start"),
+    ("data", [(1260, 532), (1260, 873)], ["HTTPS"], 1269, 812, "start"),
     # ResetDemo: restore products, clear orders and alerts (BatchWriteItem)
     ("data", [(552, 262), (940, 262)], ["restock"], 745, 253, "middle"),
     # QueryApi read bus
