@@ -47,7 +47,7 @@ export function inStockFirst(products) {
 }
 
 export function productImage(sku) {
-  return `assets/img/products/${String(sku).toLowerCase()}.svg`;
+  return `assets/img/products/${String(sku).toLowerCase()}.webp`;
 }
 
 export function formatMoney(amount, currency) {

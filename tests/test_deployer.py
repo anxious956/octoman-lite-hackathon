@@ -55,7 +55,7 @@ def test_create_uploads_the_whole_site_recursively(s3):
     expected = sorted([k for k, _ in deployer.site_files()] + ["config.js"])
     assert keys == expected
     assert "index.html" in keys and "assets/app.js" in keys and "assets/app.css" in keys
-    assert "assets/img/products/octo-mug-001.svg" in keys
+    assert "assets/img/products/octo-mug-001.webp" in keys
     assert any(k.startswith("assets/fonts/") for k in keys)
 
 

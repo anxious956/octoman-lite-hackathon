@@ -382,6 +382,7 @@ section, .hero, .how { min-width: 0; }
 .alert { display: grid; grid-template-columns: 32px 1fr auto; gap: var(--s3); align-items: center; padding: var(--s2) 0; border-top: 1px solid var(--rule); }
 .alert:first-child { border-top: 0; }
 .alert__img { width: 32px; height: 32px; border-radius: var(--r); background: var(--tile); }
+.shelf__img, .product__img, .order__img, .alert__img { object-fit: cover; }
 .alert__what { font-weight: 500; line-height: 1.3; }
 .alert__why { font-size: 13px; color: var(--ink-3); }
 

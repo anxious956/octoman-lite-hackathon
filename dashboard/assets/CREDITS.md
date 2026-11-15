@@ -44,29 +44,32 @@ Inlined as an SVG sprite in `index.html` (`<symbol id="i-...">`): `shopping-bag`
 | `img/logo.png` | The OctoMan octopus mascot, owned by the OctoMan project author; cropped and resized from the OctoMan brand artwork |
 | `img/favicon.png` | Same mascot at 48 px, used as the browser tab icon |
 
-## Original work (made for OctoMan Lite)
+## Product photos
 
-Drawn for this project and released under the same terms as the repository.
+Photos from [Unsplash](https://unsplash.com), used under the
+[Unsplash License](https://unsplash.com/license): free to use, including commercially,
+no permission needed. Credit is not required by the licence but is given here anyway.
+Each photo was cropped square and resized to 192 px WebP. They stand in for the 15
+synthetic seed products; they are stock photos, not photos of real OctoMan products.
 
-| File | What it is |
-|---|---|
-| `img/products/octo-mug-001.svg` | Illustration: Octopus Ceramic Mug |
-| `img/products/octo-tee-002.svg` | Illustration: Tentacle Graphic T-Shirt |
-| `img/products/octo-plush-003.svg` | Illustration: Octopus Plush Toy |
-| `img/products/octo-lamp-004.svg` | Illustration: Deep Sea Desk Lamp |
-| `img/products/octo-sock-005.svg` | Illustration: Kraken Crew Socks |
-| `img/products/octo-print-006.svg` | Illustration: Ink Art Print A4 |
-| `img/products/octo-case-007.svg` | Illustration: Reef Blue Phone Case |
-| `img/products/octo-bottle-008.svg` | Illustration: Insulated Water Bottle |
-| `img/products/octo-key-009.svg` | Illustration: Enamel Keychain |
-| `img/products/octo-puzzle-010.svg` | Illustration: Ocean Puzzle |
-| `img/products/octo-tote-011.svg` | Illustration: Canvas Tote Bag |
-| `img/products/octo-cap-012.svg` | Illustration: Embroidered Cap |
-| `img/products/octo-candle-013.svg` | Illustration: Sea Salt Candle |
-| `img/products/octo-note-014.svg` | Illustration: Dot-Grid Notebook |
-| `img/products/octo-stick-015.svg` | Illustration: Sticker Pack |
+| File | Stands in for | Photographer | Source |
+|---|---|---|---|
+| `img/products/octo-mug-001.webp` | Octopus Ceramic Mug | [@mediamodifier](https://unsplash.com/@mediamodifier) | [photo](https://unsplash.com/photos/a-white-coffee-mug-xf38DdLyBvI) |
+| `img/products/octo-tee-002.webp` | Tentacle Graphic T-Shirt | [@mockupbee](https://unsplash.com/@mockupbee) | [photo](https://unsplash.com/photos/a-white-shirt-on-a-white-background-4rUYuwJ2vGw) |
+| `img/products/octo-plush-003.webp` | Octopus Plush Toy, Small | [@hk_filmografy](https://unsplash.com/@hk_filmografy) | [photo](https://unsplash.com/photos/a-red-stuffed-animal-sitting-on-top-of-a-table-UpVLVLtEfss) |
+| `img/products/octo-lamp-004.webp` | Deep Sea Desk Lamp | [@oscaresquivel](https://unsplash.com/@oscaresquivel) | [photo](https://unsplash.com/photos/red-and-silver-table-lamp-at5-1nW3UCY) |
+| `img/products/octo-sock-005.webp` | Kraken Crew Socks | [@johnn21](https://unsplash.com/@johnn21) | [photo](https://unsplash.com/photos/white-red-and-blue-socks-zOFQ8v3YBBU) |
+| `img/products/octo-print-006.webp` | Ink Art Print A4 | [@joshhemsley](https://unsplash.com/@joshhemsley) | [photo](https://unsplash.com/photos/painting-of-cactus-plant-mL8cnlSC3oo) |
+| `img/products/octo-case-007.webp` | Reef Blue Phone Case | [@elsitiomobile](https://unsplash.com/@elsitiomobile) | [photo](https://unsplash.com/photos/four-assorted-color-iphone-x-cases-FQXbLmlmvWY) |
+| `img/products/octo-bottle-008.webp` | Insulated Water Bottle | [@joanofarts](https://unsplash.com/@joanofarts) | [photo](https://unsplash.com/photos/green-bottle-on-white-table-reEySFadyJQ) |
+| `img/products/octo-key-009.webp` | Enamel Keychain | [@erikalowe](https://unsplash.com/@erikalowe) | [photo](https://unsplash.com/photos/a-metal-heart-shaped-keychain-hanging-from-a-chain-dKRNe47ror4) |
+| `img/products/octo-puzzle-010.webp` | Ocean Puzzle, 500 Pieces | [@ttepavac](https://unsplash.com/@ttepavac) | [photo](https://unsplash.com/photos/a-piece-of-a-puzzle-with-a-missing-piece-cWMhxNmQVq0) |
+| `img/products/octo-tote-011.webp` | Canvas Tote Bag | [@brandomakesbranding](https://unsplash.com/@brandomakesbranding) | [photo](https://unsplash.com/photos/white-reusable-bag-on-gray-surface-smTDI-z1rlY) |
+| `img/products/octo-cap-012.webp` | Embroidered Cap | [@mediamodifier](https://unsplash.com/@mediamodifier) | [photo](https://unsplash.com/photos/white-baseball-cap-on-white-surface-t8HiP3e5abg) |
+| `img/products/octo-candle-013.webp` | Sea Salt Candle | [@oneshotespresso](https://unsplash.com/@oneshotespresso) | [photo](https://unsplash.com/photos/lighted-candle-66qsl7ia2cE) |
+| `img/products/octo-note-014.webp` | Dot-Grid Notebook | [@enginakyurt](https://unsplash.com/@enginakyurt) | [photo](https://unsplash.com/photos/notebook-and-pen-on-white-IZj7vckPGiw) |
+| `img/products/octo-stick-015.webp` | Sticker Pack, 10 Pieces | [@mkmasdos](https://unsplash.com/@mkmasdos) | [photo](https://unsplash.com/photos/a-bunch-of-stickers-on-a-yellow-background-zzHJ3VSKrZg) |
 
-Why illustrations instead of photos: free-licence (CC0) photos of these 15 products
-came from different photographers with different backgrounds, light and angles, and
-several showed brand logos. One drawn set in a single style looks consistent and needs
-no third-party licence.
+Edits: `octo-tote-011.webp` had a small printed brand mark in the bottom-right corner;
+it was painted out with the plain fabric next to it. No other photo was retouched.
+Photos were picked to show no brand names, logos or readable text.

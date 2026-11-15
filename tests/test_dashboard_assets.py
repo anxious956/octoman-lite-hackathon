@@ -68,7 +68,15 @@ def test_every_seed_product_has_an_image():
     skus = [row[0] for row in PRODUCTS]
     assert len(skus) == 15
     for sku in skus:
-        assert (ASSETS / "img" / "products" / f"{sku.lower()}.svg").is_file(), sku
+        assert (ASSETS / "img" / "products" / f"{sku.lower()}.webp").is_file(), sku
+
+
+@pytest.mark.parametrize("path", sorted((ASSETS / "img" / "products").glob("*")), ids=lambda p: p.name)
+def test_product_photos_are_small_webp(path):
+    data = path.read_bytes()
+    assert path.suffix == ".webp"
+    assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", "not a WebP file"
+    assert len(data) <= 25 * 1024, f"{len(data)} bytes"
 
 
 @pytest.mark.parametrize("path", sorted((ASSETS / "img").rglob("*.svg")), ids=lambda p: p.name)

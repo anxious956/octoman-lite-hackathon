@@ -115,7 +115,7 @@ test("money, quantities and the focused product", () => {
   const ps = [product("A", 9), product("B", 2), product("C", 0)];
   assert.equal(D.focusProduct(ps, null, null).sku, "B"); // fresh seed: fewest units in stock
   assert.equal(D.focusProduct(ps, { sku: "A" }, "B").sku, "A");
-  assert.equal(D.productImage("OCTO-MUG-001"), "assets/img/products/octo-mug-001.svg");
+  assert.equal(D.productImage("OCTO-MUG-001"), "assets/img/products/octo-mug-001.webp");
 });
 
 test("in-stock products come first, order kept inside each group", () => {
