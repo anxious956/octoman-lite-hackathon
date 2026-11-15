@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160"><title>octo-cap-012</title><ellipse cx="80" cy="134" rx="40" ry="5" fill="#2A2724" opacity="0.10"/>
+<path d="M44 108 C44 62 116 62 116 108 Z" fill="#E7DAC6" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M80 64 v44 M62 70 q8 18 6 38 M98 70 q-8 18 -6 38" fill="none" stroke="#B8AC9C" stroke-width="2"/>
+<circle cx="80" cy="64" r="4" fill="#2A2724"/>
+<path d="M38 108 h84 q8 0 8 6 q0 6 -8 6 h-84 q-8 0 -8 -6 q0 -6 8 -6 z" fill="#2A2724" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<g transform="translate(80 92) scale(0.8)"><path d="M-9 2 C-9 -10 9 -10 9 2 Z" fill="#D9512F"/><path d="M-7 2 q-3 6 -6 8 M-2.5 2 q-1 7 -3 10 M2.5 2 q1 7 3 10 M7 2 q3 6 6 8" stroke="#D9512F" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="-3.5" cy="-2.5" r="1.4" fill="#FBF7F0"/><circle cx="3.5" cy="-2.5" r="1.4" fill="#FBF7F0"/></g></svg>

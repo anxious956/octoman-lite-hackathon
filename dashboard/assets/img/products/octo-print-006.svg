@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160"><title>octo-print-006</title><ellipse cx="80" cy="134" rx="40" ry="5" fill="#2A2724" opacity="0.10"/>
+<rect x="44" y="30" width="72" height="102" rx="3" fill="#2A2724" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="51" y="37" width="58" height="88" fill="#FBF7F0"/>
+<rect x="59" y="45" width="42" height="72" fill="#E7DAC6"/>
+<g transform="translate(80 78) scale(1.5)"><path d="M-9 2 C-9 -10 9 -10 9 2 Z" fill="#2A2724"/><path d="M-7 2 q-3 6 -6 8 M-2.5 2 q-1 7 -3 10 M2.5 2 q1 7 3 10 M7 2 q3 6 6 8" stroke="#2A2724" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="-3.5" cy="-2.5" r="1.4" fill="#E7DAC6"/><circle cx="3.5" cy="-2.5" r="1.4" fill="#E7DAC6"/></g></svg>

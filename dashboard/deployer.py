@@ -42,18 +42,65 @@ def build_config_js(props: dict) -> str:
     return f"window.OCTOMAN_LITE_CONFIG = {json.dumps(config)};\n"
 
 
+CONTENT_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".mjs": "text/javascript; charset=utf-8",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".ico": "image/x-icon",
+    ".woff2": "font/woff2",
+    ".md": "text/markdown; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8",
+}
+# Code and markup change with every deploy; images and fonts do not.
+NO_STORE_EXTENSIONS = {".html", ".css", ".js", ".mjs", ".json"}
+SKIP_FILES = {"deployer.py"}
+
+
+def site_files(root: str = HERE) -> list[tuple[str, str]]:
+    """(S3 key, local path) for every file to publish, sorted for stable logs.
+
+    Everything under dashboard/ except this deployer, __pycache__ and dotfiles.
+    """
+    out = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(d for d in dirnames if not d.startswith(".") and d != "__pycache__")
+        for name in sorted(filenames):
+            if name.startswith(".") or name in SKIP_FILES or name.endswith((".pyc", ".pyo")):
+                continue
+            path = os.path.join(dirpath, name)
+            key = os.path.relpath(path, root).replace(os.sep, "/")
+            out.append((key, path))
+    return out
+
+
+def object_headers(key: str) -> tuple[str, str]:
+    """(ContentType, CacheControl) for an S3 key."""
+    ext = os.path.splitext(key)[1].lower()
+    content_type = CONTENT_TYPES.get(ext, "application/octet-stream")
+    cache = "no-store" if ext in NO_STORE_EXTENSIONS else "public, max-age=86400"
+    return content_type, cache
+
+
+def _put(bucket: str, key: str, body: bytes) -> None:
+    content_type, cache = object_headers(key)
+    _client().put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type, CacheControl=cache)
+    logger.info("Uploaded s3://%s/%s (%d bytes, %s)", bucket, key, len(body), cache)
+
+
 def publish(props: dict) -> None:
     bucket = props["DashboardBucket"]
-    with open(os.path.join(HERE, "index.html"), "rb") as f:
-        html = f.read()
-    files = {
-        "index.html": (html, "text/html; charset=utf-8"),
-        "config.js": (build_config_js(props).encode("utf-8"), "application/javascript; charset=utf-8"),
-    }
-    for key, (body, content_type) in files.items():
-        _client().put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type,
-                             CacheControl="no-store")
-        logger.info("Uploaded s3://%s/%s (%d bytes)", bucket, key, len(body))
+    for key, path in site_files():
+        with open(path, "rb") as f:
+            _put(bucket, key, f.read())
+    # Written last, so the page never sees a config for files not yet uploaded.
+    _put(bucket, "config.js", build_config_js(props).encode("utf-8"))
 
 
 def empty_bucket(bucket: str) -> int:

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160"><title>octo-stick-015</title><ellipse cx="80" cy="134" rx="40" ry="5" fill="#2A2724" opacity="0.10"/>
+<rect x="46" y="40" width="46" height="46" rx="8" fill="#C8D3DB" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" transform="rotate(-8 69 63)"/>
+<rect x="68" y="40" width="46" height="46" rx="8" fill="#E7DAC6" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" transform="rotate(8 91 63)"/>
+<circle cx="80" cy="100" r="28" fill="#D9512F" stroke="#2A2724" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<g transform="translate(80 100) scale(1.4)"><path d="M-9 2 C-9 -10 9 -10 9 2 Z" fill="#FBF7F0"/><path d="M-7 2 q-3 6 -6 8 M-2.5 2 q-1 7 -3 10 M2.5 2 q1 7 3 10 M7 2 q3 6 6 8" stroke="#FBF7F0" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="-3.5" cy="-2.5" r="1.4" fill="#D9512F"/><circle cx="3.5" cy="-2.5" r="1.4" fill="#D9512F"/></g></svg>
