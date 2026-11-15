@@ -706,6 +706,7 @@ async function refresh() {
   renderLive(true);
   try {
     const data = await getAll();
+    const firstLoad = !state.loaded;
     Object.assign(state, data, { error: null, lastUpdated: Date.now(), loaded: true });
     for (const id of [...state.pending.keys()]) {
       const p = state.pending.get(id);
@@ -715,6 +716,9 @@ async function refresh() {
     }
     render();
     snapshot();
+    // A fresh or just-restocked demo has no orders: show the scenarios once, without
+    // taking keyboard focus, so a first-time visitor sees what to click.
+    if (firstLoad && !state.orders.length && $("demo-panel").hidden) openDemo(false);
   } catch (e) {
     state.error = e;
     render();
@@ -800,11 +804,11 @@ function announceRace(p, orders) {
 }
 
 // ── the corner demo panel ───────────────────────────────────────────
-function openDemo() {
+function openDemo(focus = true) {
   $("demo-panel").hidden = false;
   $("demo-open").setAttribute("aria-expanded", "true");
   const first = $("demo-panel").querySelector(".story:not(:disabled)") || $("restock");
-  first.focus();
+  if (focus) first.focus();
 }
 
 function closeDemo(returnFocus = true) {

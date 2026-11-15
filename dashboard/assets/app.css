@@ -175,6 +175,9 @@ section, .hero, .how { min-width: 0; }
 .hero { padding: var(--s3) var(--s5) 0; }
 .hero__head { display: flex; align-items: baseline; justify-content: center; gap: var(--s3); text-align: center; flex-wrap: wrap; }
 .hero__lede { color: var(--ink-2); }
+.hero__aws { display: inline-flex; align-items: center; gap: var(--s1); padding: 1px var(--s2); border-radius: var(--r);
+  font-size: 13px; font-weight: 500; color: var(--brand); background: var(--brand-tint); }
+.hero__aws .icon { width: 14px; height: 14px; }
 .shelf {
   position: relative; margin-top: var(--s3);
   display: grid; grid-template-columns: 1fr 1fr minmax(340px, 1.5fr) 1fr 1fr; gap: var(--s4); align-items: center;
@@ -353,7 +356,8 @@ section, .hero, .how { min-width: 0; }
 
 /* orders */
 .orders, .alerts { list-style: none; margin: 0; padding: 0; }
-.orders { max-height: calc(100vh - var(--topbar) - 300px); min-height: 0; overflow-y: auto; margin-right: calc(-1 * var(--s2)); padding-right: var(--s2); }
+/* bottom padding so the last orders can scroll clear of the corner demo button */
+.orders { max-height: calc(100vh - var(--topbar) - 300px); min-height: 0; overflow-y: auto; padding-bottom: 56px; margin-right: calc(-1 * var(--s2)); padding-right: var(--s2); }
 .order { border-top: 1px solid var(--rule); }
 .order:first-child { border-top: 0; }
 .order__btn { width: 100%; display: grid; grid-template-columns: 40px 1fr auto; gap: var(--s3); align-items: center;
@@ -466,7 +470,7 @@ section, .hero, .how { min-width: 0; }
 /* ── corner demo panel (overlay, so it may have a shadow) ────────── */
 .demo { position: fixed; right: var(--s5); bottom: var(--s5); z-index: 35; display: grid; justify-items: end; gap: var(--s3); }
 .demo__fab {
-  display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; padding: 0 var(--s4);
+  display: inline-flex; align-items: center; gap: var(--s2); min-height: 40px; padding: 0 var(--s4);
   border: 0; border-radius: var(--r2); background: var(--brand); color: var(--brand-ink);
   font-weight: 600; cursor: pointer; box-shadow: var(--overlay-shadow);
 }
