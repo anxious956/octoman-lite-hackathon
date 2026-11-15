@@ -151,7 +151,7 @@ def handler(event, context):
         "new_stock": int(product.get("stock_on_hand", 0)),
         "stock_version": int(product.get("stock_version", 0)),
         "threshold": int(threshold),
-        "offers": {mp: l.get("offer_id", "") for mp, l in listings.items()},
+        "seller_skus": {mp: l.get("seller_sku", "") for mp, l in listings.items()},
         "idempotent_replay": replay,
     }
     logger.info("Reserved %d of %s for %s, stock now %d (replay=%s)",

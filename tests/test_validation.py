@@ -5,8 +5,8 @@ import pytest
 from shared.validation import normalize_marketplace, validate_order_request
 
 
-@pytest.mark.parametrize("raw,expected", [("DE", "EBAY_DE"), ("ebay_gb", "EBAY_GB"), (" tr ", "EBAY_TR"),
-                                          ("EBAY_US", "EBAY_US"), ("FR", None), (None, None), (5, None)])
+@pytest.mark.parametrize("raw,expected", [("DE", "AMAZON_DE"), ("amazon_gb", "AMAZON_UK"), ("uk", "AMAZON_UK"), ("ebay_de", None), (" tr ", "AMAZON_TR"),
+                                          ("AMAZON_US", "AMAZON_US"), ("FR", None), (None, None), (5, None)])
 def test_normalize_marketplace(raw, expected):
     assert normalize_marketplace(raw) == expected
 
@@ -14,11 +14,11 @@ def test_normalize_marketplace(raw, expected):
 def test_valid_minimal_order():
     clean, errors = validate_order_request({"marketplace": "DE", "sku": "octo-mug-001", "quantity": 2})
     assert errors == []
-    assert clean == {"marketplace": "EBAY_DE", "sku": "OCTO-MUG-001", "quantity": 2}
+    assert clean == {"marketplace": "AMAZON_DE", "sku": "OCTO-MUG-001", "quantity": 2}
 
 
 def test_valid_full_order():
-    clean, errors = validate_order_request({"marketplace": "EBAY_US", "sku": "A1", "quantity": 1,
+    clean, errors = validate_order_request({"marketplace": "AMAZON_US", "sku": "A1", "quantity": 1,
                                             "order_id": "US-123_x", "unit_price": "19.90"})
     assert errors == []
     assert clean["order_id"] == "US-123_x"

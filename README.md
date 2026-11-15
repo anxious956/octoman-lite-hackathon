@@ -1,9 +1,9 @@
 # OctoMan Lite
 
 **Cross-marketplace oversell prevention on a fully serverless AWS stack.**
-One order flow, end to end: an order arrives from eBay US, GB, DE or TR, stock
+One order flow, end to end: an order arrives from Amazon US, UK, DE or TR, stock
 is reserved atomically, the total is converted to USD with ECB reference rates,
-the new stock level is pushed to every other eBay site in parallel, a low-stock
+the new stock level is pushed to every other Amazon store in parallel, a low-stock
 alert is raised when needed, and a receipt is saved to S3.
 
 No servers, no CI/CD pipeline. Deployment is `sam build && sam deploy --guided`.
@@ -12,8 +12,8 @@ No servers, no CI/CD pipeline. Deployment is `sam build && sam deploy --guided`.
 
 ## The problem: overselling across channels
 
-A seller lists the same 3 units on eBay US, eBay UK, eBay Germany and eBay Turkey.
-Each site believes it has 3 to sell. Two buyers on two sites click "Buy" in the
+A seller lists the same 3 units on Amazon US, UK, Germany and Türkiye.
+Each store believes it has 3 to sell. Two buyers in two stores click "Buy" in the
 same second for the last unit, and both orders go through. One of them has to be
 cancelled, which costs money, seller rating and sometimes the account.
 
@@ -35,7 +35,7 @@ POST /orders  {"marketplace": "DE", "sku": "OCTO-LAMP-004", "quantity": 1}
 ```
 
 1. **IngestOrder** (Lambda) validates the request, prices it from the product's
-   eBay DE listing (EUR) and starts a Step Functions execution named after the
+   Amazon DE listing (EUR) and starts a Step Functions execution named after the
    order id. A duplicate order id is refused (HTTP 409).
 2. **ReserveStock** (Lambda) runs one DynamoDB transaction: decrement
    `stock_on_hand` **only if** `stock_on_hand >= quantity`, and create the order
@@ -44,12 +44,14 @@ POST /orders  {"marketplace": "DE", "sku": "OCTO-LAMP-004", "quantity": 1}
 3. **ConvertToUSD** (Lambda) converts the total with the ECB daily reference
    rates, falling back to built-in rates (and labelling them as such) if the
    feed is unreachable.
-4. **PushToMarketplaces** (Parallel state, one branch per eBay site) pushes the
+4. **PushToMarketplaces** (Parallel state, one branch per Amazon store) pushes the
    new quantity through the marketplace adapter. In the default **mock mode** the
-   adapter builds the exact eBay Sell Inventory API request
-   (`bulk_update_price_quantity`, with the right `X-EBAY-C-MARKETPLACE-ID` and
-   `Content-Language`) and returns it without sending it, so no eBay account or
-   credentials are needed. The request is visible in the execution graph.
+   adapter builds the exact Amazon Selling Partner API request (Listings Items
+   `PATCH /listings/2021-08-01/items/{sellerId}/{sku}` on the right regional
+   endpoint with the store's `marketplaceIds`, patching
+   `fulfillment_availability`) and returns it without sending it, so no Amazon
+   seller account or credentials are needed. The request is visible in the
+   execution graph.
 5. **IsStockLow → RaiseLowStockAlert**: if the new stock is below the product's
    threshold, an alert row is written straight from Step Functions to DynamoDB
    (no Lambda).
@@ -93,7 +95,7 @@ flowchart LR
       R[ReserveStock] -->|ok| FX[ConvertToUSD]
       R -->|InsufficientStock / UnknownSku| REJ[RecordRejection]
       REJ --> FAIL([OversellPrevented])
-      FX --> PAR{{PushToMarketplaces<br/>eBay US · GB · DE · TR}}
+      FX --> PAR{{PushToMarketplaces<br/>Amazon US · UK · DE · TR}}
       PAR --> LOW{IsStockLow}
       LOW -->|yes| ALR[RaiseLowStockAlert]
       LOW -->|no| FIN[FinalizeOrder]
@@ -104,7 +106,7 @@ flowchart LR
     R -. create once .-> OT[(DynamoDB<br/>orders)]
     FX -. HTTPS .-> ECB[ECB daily<br/>reference rates]
     PAR -. listing copy .-> PT
-    PAR -. mock adapter .-> EBAY[eBay Sell Inventory API<br/>request built, not sent]
+    PAR -. mock adapter .-> AMZ[Amazon Selling Partner API<br/>request built, not sent]
     REJ -. putItem .-> OT
     ALR -. putItem .-> AT[(DynamoDB<br/>alerts)]
     FIN -. receipt .-> S3R[(S3<br/>receipts bucket)]
@@ -119,7 +121,7 @@ flowchart LR
 | **API Gateway (HTTP API)** | `POST /orders`, `GET /products`, `GET /orders`, `GET /alerts`, `POST /demo/reset`. CORS limited to the dashboard. Throttled: 10 rps by default, `POST /orders` 1 rps, `POST /demo/reset` 1 rps (burst 2). |
 | **AWS Lambda** (Python 3.12, 7 functions + 1 custom resource) | Validation, reservation, FX, marketplace push, receipt, queries, demo reset. No third-party packages. |
 | **AWS Step Functions** (Standard, JSONata) | Orchestrates the order flow; Parallel state fans out to the four marketplaces; Catch turns an oversell into a recorded rejection; direct DynamoDB integrations for the two single-write steps. |
-| **Amazon DynamoDB** (on-demand) | `products` (single source of truth for stock + per-site listing copy), `orders` (GSI for newest first), `alerts` (one row per SKU). |
+| **Amazon DynamoDB** (on-demand) | `products` (single source of truth for stock + per-store listing copy), `orders` (GSI for newest first), `alerts` (one row per SKU). |
 | **Amazon S3** | Private receipts bucket (30-day expiry) and private dashboard bucket. |
 | **Amazon CloudFront** | HTTPS front door for the dashboard via Origin Access Control; the bucket stays private. |
 | **CloudFormation custom resource** | Uploads the dashboard and its `config.js` (API URL) during `sam deploy`, and empties both buckets on `sam delete`. |
@@ -204,7 +206,7 @@ Then seed (pass the region you deployed to):
 python scripts/seed.py --profile <your-profile> --region <region>
 ```
 
-Open `DashboardUrl` and click a site button. To start over at any time, click
+Open `DashboardUrl` and click a store button. To start over at any time, click
 **Restock the demo** on the dashboard, or from the command line:
 
 ```bash
@@ -346,13 +348,13 @@ projects:
 ## Design notes and production considerations
 
 - **Mock adapter.** `MARKETPLACE_MODE=mock` (the default) keeps the same adapter
-  interface OctoMan uses for eBay, so a live adapter is a drop-in replacement.
+  interface OctoMan uses for Amazon, so a live adapter is a drop-in replacement.
   Live mode is intentionally not available here: it needs OAuth tokens per
   seller, which belong in a token store this demo does not include.
 - **Order of steps.** FX conversion runs before the marketplace push, as
   specified. In production, pushing first would shorten the window in which
-  another site can still sell the item (by up to the FX timeout of 3 s).
-- **The marketplace is the origin of truth for its own sale.** The site that sold
+  another store can still sell the item (by up to the FX timeout of 3 s).
+- **The marketplace is the origin of truth for its own sale.** The store that sold
   the item already decremented its listing, so its branch only updates the local
   copy (`status: skipped`).
 - **Single tenant.** OctoMan is multi-tenant (Cognito, per-tenant keys); Lite uses
@@ -379,7 +381,7 @@ samconfig.toml                   deploy defaults (stack name octoman-lite)
 statemachine/order_flow.asl.json order workflow (JSONata)
 src/handlers/                    Lambda entry points
 src/shared/                      db helpers, ECB FX, validation, config, seed data
-src/shared/adapters/             eBay adapter (mock by default)
+src/shared/adapters/             Amazon adapter (mock by default)
 dashboard/index.html             static dashboard
 dashboard/deployer.py            custom resource that publishes it
 scripts/seed.py                  15 synthetic products
@@ -388,5 +390,5 @@ tests/                           pytest + moto, no AWS needed
 docs/demo_script.md              2.5 minute demo script
 ```
 
-All product names, offer ids and prices are synthetic. The repository contains no
+All product names, seller SKUs and prices are synthetic. The repository contains no
 credentials, API keys or customer data.

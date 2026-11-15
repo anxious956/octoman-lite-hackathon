@@ -8,8 +8,8 @@ import pytest
 from shared import db, fx
 
 PRODUCTS, ORDERS, ALERTS = "test-products", "test-orders", "test-alerts"
-MARKETS = {"EBAY_US": ("USD", "19.99"), "EBAY_GB": ("GBP", "15.99"),
-           "EBAY_DE": ("EUR", "17.99"), "EBAY_TR": ("TRY", "999.00")}
+MARKETS = {"AMAZON_US": ("USD", "19.99"), "AMAZON_UK": ("GBP", "15.99"),
+           "AMAZON_DE": ("EUR", "17.99"), "AMAZON_TR": ("TRY", "999.00")}
 
 
 @pytest.fixture(autouse=True)
@@ -34,7 +34,7 @@ def make_product(sku="TEST-SKU-1", stock=10, threshold=5, version=0, markets=MAR
     return {
         "sku": sku, "title": f"Test product {sku}", "stock_on_hand": stock,
         "stock_version": version, "low_stock_threshold": threshold,
-        "listings": {mp: {"offer_id": f"MOCK-OFFER-{mp[-2:]}-{sku}", "price": Decimal(p),
+        "listings": {mp: {"seller_sku": sku, "price": Decimal(p),
                           "currency": cur, "listed_qty": stock, "synced_version": version,
                           "sync_status": "seeded"}
                      for mp, (cur, p) in markets.items()},
@@ -64,7 +64,7 @@ def tables():
         yield {"products": ddb.Table(PRODUCTS), "orders": ddb.Table(ORDERS), "alerts": ddb.Table(ALERTS)}
 
 
-def make_order(order_id="DE-test-1", sku="TEST-SKU-1", qty=2, mp="EBAY_DE"):
+def make_order(order_id="DE-test-1", sku="TEST-SKU-1", qty=2, mp="AMAZON_DE"):
     return {"order_id": order_id, "marketplace": mp, "sku": sku, "quantity": qty,
             "unit_price": "17.99", "currency": "EUR", "total": f"{17.99 * qty:.2f}",
             "created_at": "2026-11-15T10:00:00.000Z"}

@@ -1,5 +1,5 @@
 {
-  "Comment": "OctoMan Lite order flow: reserve stock atomically, convert to USD, push the new level to every eBay site in parallel, raise a low-stock alert, save the receipt.",
+  "Comment": "OctoMan Lite order flow: reserve stock atomically, convert to USD, push the new level to every Amazon store in parallel, raise a low-stock alert, save the receipt.",
   "QueryLanguage": "JSONata",
   "TimeoutSeconds": 300,
   "StartAt": "ReserveStock",
@@ -91,18 +91,18 @@
     },
     "PushToMarketplaces": {
       "Type": "Parallel",
-      "Comment": "One branch per eBay site. A failing site reports status=error instead of failing the order.",
+      "Comment": "One branch per Amazon store. A failing site reports status=error instead of failing the order.",
       "Branches": [
         {
-          "StartAt": "Push eBay US",
+          "StartAt": "Push Amazon US",
           "States": {
-            "Push eBay US": {
+            "Push Amazon US": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Arguments": {
                 "FunctionName": "${PushMarketplaceFunctionArn}",
                 "Payload": {
-                  "marketplace_id": "EBAY_US",
+                  "marketplace_id": "AMAZON_US",
                   "order": "{% $order %}",
                   "stock": "{% $stock %}"
                 }
@@ -127,15 +127,15 @@
           }
         },
         {
-          "StartAt": "Push eBay GB",
+          "StartAt": "Push Amazon UK",
           "States": {
-            "Push eBay GB": {
+            "Push Amazon UK": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Arguments": {
                 "FunctionName": "${PushMarketplaceFunctionArn}",
                 "Payload": {
-                  "marketplace_id": "EBAY_GB",
+                  "marketplace_id": "AMAZON_UK",
                   "order": "{% $order %}",
                   "stock": "{% $stock %}"
                 }
@@ -160,15 +160,15 @@
           }
         },
         {
-          "StartAt": "Push eBay DE",
+          "StartAt": "Push Amazon DE",
           "States": {
-            "Push eBay DE": {
+            "Push Amazon DE": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Arguments": {
                 "FunctionName": "${PushMarketplaceFunctionArn}",
                 "Payload": {
-                  "marketplace_id": "EBAY_DE",
+                  "marketplace_id": "AMAZON_DE",
                   "order": "{% $order %}",
                   "stock": "{% $stock %}"
                 }
@@ -193,15 +193,15 @@
           }
         },
         {
-          "StartAt": "Push eBay TR",
+          "StartAt": "Push Amazon TR",
           "States": {
-            "Push eBay TR": {
+            "Push Amazon TR": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Arguments": {
                 "FunctionName": "${PushMarketplaceFunctionArn}",
                 "Payload": {
-                  "marketplace_id": "EBAY_TR",
+                  "marketplace_id": "AMAZON_TR",
                   "order": "{% $order %}",
                   "stock": "{% $stock %}"
                 }

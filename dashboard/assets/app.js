@@ -67,7 +67,7 @@ function postOrder(order) {
 
 /** One place that turns an HTTP result into words for a shop owner. */
 function messageFor(res) {
-  if (res.status === 0) return "Couldn't reach the shop. Check the connection and try again.";
+  if (res.status === 0) return "Couldn't reach the store data. Check the connection and try again.";
   if (res.status === 429) return "Too many orders at once. Wait a second and try again.";
   if (res.status === 409) return "That order was already received.";
   const errs = res.body && res.body.errors;
@@ -215,8 +215,8 @@ function renderBanner() {
   $("banner").hidden = !show;
   if (show) {
     setText($("banner-text"), state.loaded
-      ? "Lost the connection to the shop data. What you see may be out of date."
-      : "The shop data can't be reached right now. The demo may be starting up.");
+      ? "Lost the connection to the store data. What you see may be out of date."
+      : "The store data can't be reached right now. The demo may be starting up.");
   }
 }
 
@@ -246,6 +246,7 @@ function buildShelf() {
     node.textContent = "";
     node.append(
       el("div", { class: "shop__name" }, [flag(m), m.name]),
+      el("div", { class: "shop__store", text: m.store }),
       qty, el("div", { class: "shop__label", text: "shown as available" }),
       el("div", { class: "shop__foot" }, [price, sync]));
     shelfRefs.shops[m.id] = { node, qty, price, sync };
@@ -419,7 +420,7 @@ function buildRow(p) {
   refs.numLabel = el("span", { class: "product__numlabel" });
   refs.visual = el("div");
   refs.chip = el("span");
-  // The four shops: each shows what that eBay shop displays, and is the button that
+  // The four stores: each shows what that Amazon store displays, and is the button that
   // makes a customer there buy. Same width, same order as the shelf picture above.
   refs.markets = {};
   const marketGrid = el("div", { class: "markets" });
@@ -487,9 +488,9 @@ function renderRowButtons(sku) {
   refs.race.hidden = left === 0;
   refs.race.disabled = busy;
   refs.race.classList.toggle("is-emphasised", left === 1);
-  setText(refs.race, left === 1 ? "Race: 2 shops want the last one" : `Race: 2 shops want all ${left}`);
+  setText(refs.race, left === 1 ? "Race: 2 stores want the last one" : `Race: 2 stores want all ${left}`);
   refs.race.setAttribute("aria-label",
-    `Two customers in two different shops try to buy all ${left} of ${p.title} at the same moment`);
+    `Two customers in two different stores try to buy all ${left} of ${p.title} at the same moment`);
 }
 
 function renderProducts(maxUnits) {
@@ -580,7 +581,7 @@ function detailRows(o) {
   if (o.status === "COMPLETED") {
     const s = o.sync_summary || {};
     rows.push(["Shelf after the sale", `${o.stock_after} left`]);
-    rows.push(["Shops", `${s.synced ?? 0} updated, ${s.skipped ?? 0} already knew, ${s.errored ?? 0} failed`]);
+    rows.push(["Stores", `${s.synced ?? 0} updated, ${s.skipped ?? 0} already knew, ${s.errored ?? 0} failed`]);
     const note = D.fxNote(o);
     if (note) rows.push(["Price in dollars", `${D.formatMoney(o.base_total, o.base_currency)}, ${note}`]);
     if (o.receipt_key) rows.push(["Receipt saved as", o.receipt_key]);

@@ -21,7 +21,7 @@ def test_about_fifteen_products_on_all_marketplaces():
         for mp, listing in item["listings"].items():
             assert listing["currency"] == MARKETPLACES[mp]
             assert listing["price"] > 0 and listing["price"] == listing["price"].quantize(Decimal("0.01"))
-            assert listing["offer_id"].startswith(f"MOCK-OFFER-{mp[-2:]}-")
+            assert listing["seller_sku"] == item["sku"]
 
 
 def test_demo_scenarios_exist():

@@ -14,7 +14,7 @@ from shared import db
 
 def _stock(new_stock=4, version=1, sku="TEST-SKU-1"):
     return {"sku": sku, "title": "t", "new_stock": new_stock, "stock_version": version, "threshold": 5,
-            "offers": {mp: f"MOCK-OFFER-{mp[-2:]}-{sku}" for mp in ("EBAY_US", "EBAY_GB", "EBAY_DE", "EBAY_TR")}}
+            "seller_skus": {mp: sku for mp in ("AMAZON_US", "AMAZON_UK", "AMAZON_DE", "AMAZON_TR")}}
 
 
 def _listing(tables, mp, sku="TEST-SKU-1"):
@@ -25,37 +25,37 @@ def _listing(tables, mp, sku="TEST-SKU-1"):
 
 def test_push_other_marketplace_builds_request_and_updates_copy(tables):
     tables["products"].put_item(Item=make_product(stock=10))
-    out = push_marketplace.handler({"marketplace_id": "EBAY_US", "order": make_order(), "stock": _stock()}, None)
+    out = push_marketplace.handler({"marketplace_id": "AMAZON_US", "order": make_order(), "stock": _stock()}, None)
 
     assert out["status"] == "ok" and out["mode"] == "mock"
-    assert out["channel"] == "EBAY" and out["external_id"] == "MOCK-OFFER-US-TEST-SKU-1"
-    assert out["request"]["headers"]["X-EBAY-C-MARKETPLACE-ID"] == "EBAY_US"
-    listing = _listing(tables, "EBAY_US")
+    assert out["channel"] == "AMAZON" and out["external_id"] == "TEST-SKU-1"
+    assert "marketplaceIds=ATVPDKIKX0DER" in out["request"]["url"]
+    listing = _listing(tables, "AMAZON_US")
     assert listing["listed_qty"] == 4 and listing["synced_version"] == 1 and listing["sync_status"] == "synced"
 
 
 def test_push_origin_marketplace_is_skipped_but_copy_updated(tables):
     tables["products"].put_item(Item=make_product(stock=10))
-    out = push_marketplace.handler({"marketplace_id": "EBAY_DE", "order": make_order(), "stock": _stock()}, None)
+    out = push_marketplace.handler({"marketplace_id": "AMAZON_DE", "order": make_order(), "stock": _stock()}, None)
     assert out["status"] == "skipped" and out["request"] is None
-    assert _listing(tables, "EBAY_DE")["listed_qty"] == 4
+    assert _listing(tables, "AMAZON_DE")["listed_qty"] == 4
 
 
 def test_older_push_cannot_overwrite_newer_quantity(tables):
     tables["products"].put_item(Item=make_product(stock=10))
     order = make_order()
-    push_marketplace.handler({"marketplace_id": "EBAY_US", "order": order, "stock": _stock(3, version=2)}, None)
-    late = push_marketplace.handler({"marketplace_id": "EBAY_US", "order": order, "stock": _stock(5, version=1)}, None)
+    push_marketplace.handler({"marketplace_id": "AMAZON_US", "order": order, "stock": _stock(3, version=2)}, None)
+    late = push_marketplace.handler({"marketplace_id": "AMAZON_US", "order": order, "stock": _stock(5, version=1)}, None)
     assert "newer stock level" in late["detail"]
-    assert _listing(tables, "EBAY_US")["listed_qty"] == 3
+    assert _listing(tables, "AMAZON_US")["listed_qty"] == 3
 
 
 def test_adapter_error_is_reported_not_raised(tables, monkeypatch):
     tables["products"].put_item(Item=make_product(stock=10))
     monkeypatch.setenv("MARKETPLACE_MODE", "live")
-    out = push_marketplace.handler({"marketplace_id": "EBAY_GB", "order": make_order(), "stock": _stock()}, None)
+    out = push_marketplace.handler({"marketplace_id": "AMAZON_UK", "order": make_order(), "stock": _stock()}, None)
     assert out["status"] == "error"
-    assert _listing(tables, "EBAY_GB")["sync_status"] == "error"
+    assert _listing(tables, "AMAZON_UK")["sync_status"] == "error"
 
 
 def test_listing_copy_retries_a_transaction_conflict(tables):
@@ -73,17 +73,17 @@ def test_listing_copy_retries_a_transaction_conflict(tables):
 
     with patch.object(tbl, "update_item", side_effect=conflict_once), \
             patch.object(db, "DYNAMO_RETRY_BASE_DELAY", 0):
-        out = push_marketplace.handler({"marketplace_id": "EBAY_US", "order": make_order(), "stock": _stock()}, None)
+        out = push_marketplace.handler({"marketplace_id": "AMAZON_US", "order": make_order(), "stock": _stock()}, None)
 
     assert len(calls) == 2
     assert out["status"] == "ok" and "not updated" not in out["detail"]
-    assert _listing(tables, "EBAY_US")["listed_qty"] == 4
+    assert _listing(tables, "AMAZON_US")["listed_qty"] == 4
 
 
 def test_unlisted_marketplace_is_skipped(tables):
     stock = _stock()
-    del stock["offers"]["EBAY_TR"]
-    out = push_marketplace.handler({"marketplace_id": "EBAY_TR", "order": make_order(), "stock": stock}, None)
+    del stock["seller_skus"]["AMAZON_TR"]
+    out = push_marketplace.handler({"marketplace_id": "AMAZON_TR", "order": make_order(), "stock": stock}, None)
     assert out["status"] == "skipped"
 
 

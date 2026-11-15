@@ -1,7 +1,7 @@
 {
   "order": {
     "order_id": "DE-sample-0001",
-    "marketplace": "EBAY_DE",
+    "marketplace": "AMAZON_DE",
     "sku": "OCTO-MUG-001",
     "quantity": 2,
     "unit_price": "14.90",
@@ -15,11 +15,11 @@
     "new_stock": 4,
     "stock_version": 7,
     "threshold": 5,
-    "offers": {
-      "EBAY_US": "MOCK-OFFER-US-001",
-      "EBAY_GB": "MOCK-OFFER-GB-001",
-      "EBAY_DE": "MOCK-OFFER-DE-001",
-      "EBAY_TR": "MOCK-OFFER-TR-001"
+    "seller_skus": {
+      "AMAZON_US": "OCTO-MUG-001",
+      "AMAZON_UK": "OCTO-MUG-001",
+      "AMAZON_DE": "OCTO-MUG-001",
+      "AMAZON_TR": "OCTO-MUG-001"
     },
     "idempotent_replay": false
   },
@@ -33,9 +33,9 @@
   },
   "sync": [
     {
-      "channel": "EBAY",
-      "marketplace_id": "EBAY_US",
-      "external_id": "MOCK-OFFER-US-001",
+      "channel": "AMAZON",
+      "marketplace_id": "AMAZON_US",
+      "external_id": "OCTO-MUG-001",
       "quantity": 4,
       "mode": "mock",
       "status": "ok",
@@ -43,9 +43,9 @@
       "request": null
     },
     {
-      "channel": "EBAY",
-      "marketplace_id": "EBAY_GB",
-      "external_id": "MOCK-OFFER-GB-001",
+      "channel": "AMAZON",
+      "marketplace_id": "AMAZON_UK",
+      "external_id": "OCTO-MUG-001",
       "quantity": 4,
       "mode": "mock",
       "status": "ok",
@@ -53,9 +53,9 @@
       "request": null
     },
     {
-      "channel": "EBAY",
-      "marketplace_id": "EBAY_DE",
-      "external_id": "MOCK-OFFER-DE-001",
+      "channel": "AMAZON",
+      "marketplace_id": "AMAZON_DE",
+      "external_id": "OCTO-MUG-001",
       "quantity": 4,
       "mode": "mock",
       "status": "skipped",
@@ -63,9 +63,9 @@
       "request": null
     },
     {
-      "channel": "EBAY",
-      "marketplace_id": "EBAY_TR",
-      "external_id": "MOCK-OFFER-TR-001",
+      "channel": "AMAZON",
+      "marketplace_id": "AMAZON_TR",
+      "external_id": "OCTO-MUG-001",
       "quantity": 4,
       "mode": "mock",
       "status": "ok",

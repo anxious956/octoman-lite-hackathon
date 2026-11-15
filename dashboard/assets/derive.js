@@ -2,10 +2,10 @@
 // unless passed in. app.js renders what these return; tests/js covers them.
 
 export const MARKETS = [
-  { id: "EBAY_US", code: "US", name: "United States", flag: "us", currency: "USD", symbol: "$" },
-  { id: "EBAY_GB", code: "GB", name: "United Kingdom", flag: "gb", currency: "GBP", symbol: "£" },
-  { id: "EBAY_DE", code: "DE", name: "Germany", flag: "de", currency: "EUR", symbol: "€" },
-  { id: "EBAY_TR", code: "TR", name: "Türkiye", flag: "tr", currency: "TRY", symbol: "₺" },
+  { id: "AMAZON_US", code: "US", name: "United States", store: "amazon.com", flag: "us", currency: "USD", symbol: "$" },
+  { id: "AMAZON_UK", code: "UK", name: "United Kingdom", store: "amazon.co.uk", flag: "gb", currency: "GBP", symbol: "£" },
+  { id: "AMAZON_DE", code: "DE", name: "Germany", store: "amazon.de", flag: "de", currency: "EUR", symbol: "€" },
+  { id: "AMAZON_TR", code: "TR", name: "Türkiye", store: "amazon.com.tr", flag: "tr", currency: "TRY", symbol: "₺" },
 ];
 export const MARKET_BY_ID = Object.fromEntries(MARKETS.map((m) => [m.id, m]));
 export const MAX_QTY = 100;
@@ -106,7 +106,7 @@ export const FLOW_STEPS = [
   { key: "in", name: "Order arrives", caption: "API Gateway + Lambda", icon: "shopping-bag" },
   { key: "shelf", name: "Check the shelf", caption: "DynamoDB transaction", icon: "package" },
   { key: "fx", name: "Convert to dollars", caption: "Lambda + ECB rates", icon: "circle-dollar-sign" },
-  { key: "shops", name: "Update all 4 shops", caption: "Step Functions Parallel", icon: "store" },
+  { key: "shops", name: "Update all 4 stores", caption: "Step Functions Parallel", icon: "store" },
   { key: "low", name: "Low-stock warning", caption: "DynamoDB", icon: "triangle-alert" },
   { key: "receipt", name: "Save receipt", caption: "S3", icon: "receipt" },
 ];
@@ -157,21 +157,21 @@ function inStock(products) {
 
 /** "A customer in Germany buys one": the product with the most units left. */
 export function pickSellOne(products) {
-  const c = inStock(products).filter((p) => listedOn(p, "EBAY_DE"));
+  const c = inStock(products).filter((p) => listedOn(p, "AMAZON_DE"));
   if (!c.length) return null;
   const p = c.reduce((a, b) => (unitsLeft(b) > unitsLeft(a) ? b : a));
-  return { product: p, orders: [{ marketplace: "EBAY_DE", quantity: 1 }] };
+  return { product: p, orders: [{ marketplace: "AMAZON_DE", quantity: 1 }] };
 }
 
 /** "Sell until stock runs low": smallest non-negative gap to the warning level. */
 export function pickLowStock(products) {
   const c = inStock(products)
-    .filter((p) => listedOn(p, "EBAY_US") && warnBelow(p) >= 1 && unitsLeft(p) >= warnBelow(p))
+    .filter((p) => listedOn(p, "AMAZON_US") && warnBelow(p) >= 1 && unitsLeft(p) >= warnBelow(p))
     .filter((p) => unitsLeft(p) - warnBelow(p) + 1 <= Math.min(unitsLeft(p), MAX_QTY));
   if (!c.length) return null;
   const gap = (p) => unitsLeft(p) - warnBelow(p);
   const p = c.reduce((a, b) => (gap(b) < gap(a) ? b : a));
-  return { product: p, orders: [{ marketplace: "EBAY_US", quantity: gap(p) + 1 }] };
+  return { product: p, orders: [{ marketplace: "AMAZON_US", quantity: gap(p) + 1 }] };
 }
 
 /** "Two customers buy the last one at once": the in-stock product with the fewest units. */
@@ -191,10 +191,10 @@ export function raceOrders(product, rng = Math.random) {
 
 /** "Someone orders more than we have": the smallest in-stock product, two more than it has. */
 export function pickOversell(products) {
-  const c = inStock(products).filter((p) => listedOn(p, "EBAY_GB") && unitsLeft(p) + 1 <= MAX_QTY);
+  const c = inStock(products).filter((p) => listedOn(p, "AMAZON_UK") && unitsLeft(p) + 1 <= MAX_QTY);
   if (!c.length) return null;
   const p = c.reduce((a, b) => (unitsLeft(b) < unitsLeft(a) ? b : a));
-  return { product: p, orders: [{ marketplace: "EBAY_GB", quantity: Math.min(unitsLeft(p) + 2, MAX_QTY) }] };
+  return { product: p, orders: [{ marketplace: "AMAZON_UK", quantity: Math.min(unitsLeft(p) + 2, MAX_QTY) }] };
 }
 
 /** Fisher-Yates with an injectable random source (tests pass a seeded one). */

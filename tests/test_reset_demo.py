@@ -26,7 +26,7 @@ def test_reset_restores_stock_and_listings(tables):
     # Sell a few, break a listing copy, then reset.
     tables["products"].update_item(Key={"sku": "OCTO-PRINT-006"}, UpdateExpression="SET stock_on_hand = :z",
                                    ExpressionAttributeValues={":z": 0})
-    tables["products"].update_item(Key={"sku": "OCTO-MUG-001"}, UpdateExpression="SET listings.EBAY_DE.listed_qty = :z",
+    tables["products"].update_item(Key={"sku": "OCTO-MUG-001"}, UpdateExpression="SET listings.AMAZON_DE.listed_qty = :z",
                                    ExpressionAttributeValues={":z": 3})
     body = _reset()
 
@@ -34,7 +34,7 @@ def test_reset_restores_stock_and_listings(tables):
     assert tables["products"].scan()["Count"] == 15
     seeded = {row[0]: row[3] for row in PRODUCTS}
     assert _product(tables, "OCTO-PRINT-006")["stock_on_hand"] == seeded["OCTO-PRINT-006"]
-    assert _product(tables, "OCTO-MUG-001")["listings"]["EBAY_DE"]["listed_qty"] == seeded["OCTO-MUG-001"]
+    assert _product(tables, "OCTO-MUG-001")["listings"]["AMAZON_DE"]["listed_qty"] == seeded["OCTO-MUG-001"]
 
 
 def test_reset_clears_orders_and_alerts(tables):
@@ -58,13 +58,13 @@ def test_versions_restart_from_the_current_time(tables):
 def test_late_push_from_before_the_reset_cannot_overwrite_fresh_stock(tables):
     """An order still running during the reset carries an old, small stock_version."""
     _reset()
-    fresh = _product(tables, "OCTO-MUG-001")["listings"]["EBAY_US"]["listed_qty"]
+    fresh = _product(tables, "OCTO-MUG-001")["listings"]["AMAZON_US"]["listed_qty"]
     stale_stock = {"sku": "OCTO-MUG-001", "title": "t", "new_stock": 2, "stock_version": 3, "threshold": 5,
-                   "offers": {"EBAY_US": "MOCK-OFFER-US-001"}}
-    out = push_marketplace.handler({"marketplace_id": "EBAY_US", "order": make_order(sku="OCTO-MUG-001"),
+                   "seller_skus": {"AMAZON_US": "OCTO-MUG-001"}}
+    out = push_marketplace.handler({"marketplace_id": "AMAZON_US", "order": make_order(sku="OCTO-MUG-001"),
                                     "stock": stale_stock}, None)
     assert "newer stock level" in out["detail"]
-    assert _product(tables, "OCTO-MUG-001")["listings"]["EBAY_US"]["listed_qty"] == fresh
+    assert _product(tables, "OCTO-MUG-001")["listings"]["AMAZON_US"]["listed_qty"] == fresh
 
 
 def test_a_new_order_after_a_reset_goes_all_the_way_through(tables, monkeypatch):
@@ -78,7 +78,7 @@ def test_a_new_order_after_a_reset_goes_all_the_way_through(tables, monkeypatch)
     stock = reserve_stock.handler({"order": order}, None)
     assert stock["new_stock"] == 22 and stock["stock_version"] == base + 1
 
-    for mp in ("EBAY_US", "EBAY_GB", "EBAY_DE", "EBAY_TR"):
+    for mp in ("AMAZON_US", "AMAZON_UK", "AMAZON_DE", "AMAZON_TR"):
         push_marketplace.handler({"marketplace_id": mp, "order": order, "stock": stock}, None)
     listings = _product(tables, "OCTO-MUG-001")["listings"]
     assert {l["listed_qty"] for l in listings.values()} == {22}
@@ -115,4 +115,4 @@ def test_cli_and_lambda_restore_the_same_products():
 @pytest.mark.parametrize("sku", [row[0] for row in PRODUCTS])
 def test_every_seed_product_is_listed_on_all_four_shops(sku):
     item = next(i for i in build_items("t") if i["sku"] == sku)
-    assert set(item["listings"]) == {"EBAY_US", "EBAY_GB", "EBAY_DE", "EBAY_TR"}
+    assert set(item["listings"]) == {"AMAZON_US", "AMAZON_UK", "AMAZON_DE", "AMAZON_TR"}

@@ -56,7 +56,7 @@ NODES = {
     "start": (720, 470, "step-functions", ["Execution", "name = order_id"], "below"),
     "reserve": (895, 470, "lambda", ["ReserveStock"], "below"),
     "fx": (1070, 470, "lambda", ["ConvertToUSD"], "below"),
-    "push": (1260, 470, "lambda", ["PushToMarketplaces", "Parallel: eBay US · GB · DE · TR"], "below"),
+    "push": (1260, 470, "lambda", ["PushToMarketplaces", "Parallel: Amazon US · UK · DE · TR"], "below"),
     "alert": (1610, 470, "dynamodb-item", ["RaiseLowStockAlert", "direct putItem"], "below"),
     "finalize": (1790, 470, "lambda", ["FinalizeOrder"], "below"),
     "reject": (895, 620, "dynamodb-item", ["RecordRejection", "direct putItem"], "below"),
@@ -65,7 +65,7 @@ NODES = {
     "products": (1260, 230, "dynamodb", ["products"], "right"),
     "alerts": (1610, 230, "dynamodb", ["alerts"], "right"),
     "ecb": (1070, 905, "internet-alt1", ["ECB daily", "reference rates"], "below"),
-    "ebay": (1260, 905, "internet-alt1", ["eBay Sell Inventory API", "request built, not sent"], "below"),
+    "amazon_api": (1260, 905, "internet-alt1", ["Amazon Selling Partner API", "request built, not sent"], "below"),
 }
 DIAMOND = (1440, 470, 110, 64, "IsStockLow?")
 FAIL_PILL = (895, 735, 156, 28, "OversellPrevented")

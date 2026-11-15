@@ -6,11 +6,11 @@ Working notes for the OctoMan Lite hackathon build (AWS Builder Center
 ## Scope
 
 One flow, end to end: POST /orders -> Step Functions (reserve stock ->
-convert to USD -> push to eBay US/GB/DE/TR in parallel -> low-stock alert ->
+convert to USD -> push to Amazon US/UK/DE/TR in parallel -> low-stock alert ->
 receipt in S3), plus GET /products, /orders, /alerts and a static dashboard.
 Out of scope: auth and multi-tenancy, error tracking, CI/CD, nested stacks,
 rate limiting beyond API Gateway throttling, circuit breakers, payments, other
-marketplaces' APIs, live eBay calls.
+marketplaces' APIs, live Amazon calls.
 
 ## Build steps (each one a local commit)
 

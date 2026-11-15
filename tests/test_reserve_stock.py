@@ -16,7 +16,7 @@ def test_decrements_stock_and_creates_order(tables):
     assert out["new_stock"] == 7
     assert out["stock_version"] == 1
     assert out["threshold"] == 5
-    assert out["offers"]["EBAY_DE"] == "MOCK-OFFER-DE-TEST-SKU-1"
+    assert out["seller_skus"]["AMAZON_DE"] == "TEST-SKU-1"
     assert out["idempotent_replay"] is False
 
     order = tables["orders"].get_item(Key={"order_id": "DE-test-1"})["Item"]
@@ -60,7 +60,7 @@ def test_retried_task_does_not_decrement_twice(tables):
 
 def test_two_orders_for_the_last_unit_only_one_wins(tables):
     tables["products"].put_item(Item=make_product(stock=1))
-    reserve_stock.handler({"order": make_order(order_id="US-a", qty=1, mp="EBAY_US")}, None)
+    reserve_stock.handler({"order": make_order(order_id="US-a", qty=1, mp="AMAZON_US")}, None)
     with pytest.raises(reserve_stock.InsufficientStock):
         reserve_stock.handler({"order": make_order(order_id="DE-b", qty=1)}, None)
     assert tables["products"].get_item(Key={"sku": "TEST-SKU-1"})["Item"]["stock_on_hand"] == 0

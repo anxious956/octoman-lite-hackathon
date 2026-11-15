@@ -5,7 +5,7 @@ import { test } from "node:test";
 import * as D from "../../dashboard/assets/derive.js";
 
 const listings = (qty = 5) => Object.fromEntries(D.MARKETS.map((m) => [m.id, {
-  offer_id: `MOCK-${m.code}`, price: 10, currency: m.currency, listed_qty: qty, sync_status: "seeded",
+  seller_sku: `MOCK-${m.code}`, price: 10, currency: m.currency, listed_qty: qty, sync_status: "seeded",
 }]));
 const product = (sku, stock, threshold = 5, extra = {}) => ({
   sku, title: sku, stock_on_hand: stock, low_stock_threshold: threshold, listings: listings(stock), ...extra,
@@ -52,7 +52,7 @@ test("flow strip: accepted but not yet stored, and still processing", () => {
 test("sell one in Germany picks the product with the most units", () => {
   const pick = D.pickSellOne([product("A", 3), product("B", 30), product("C", 0)]);
   assert.equal(pick.product.sku, "B");
-  assert.deepEqual(pick.orders, [{ marketplace: "EBAY_DE", quantity: 1 }]);
+  assert.deepEqual(pick.orders, [{ marketplace: "AMAZON_DE", quantity: 1 }]);
 });
 
 test("low-stock scenario takes the closest product just below its warning level", () => {
@@ -65,7 +65,7 @@ test("low-stock scenario takes the closest product just below its warning level"
 test("oversell asks for two more than the smallest in-stock product has", () => {
   const pick = D.pickOversell([product("A", 9), product("B", 3), product("C", 0)]);
   assert.equal(pick.product.sku, "B");
-  assert.deepEqual(pick.orders, [{ marketplace: "EBAY_GB", quantity: 5 }]);
+  assert.deepEqual(pick.orders, [{ marketplace: "AMAZON_UK", quantity: 5 }]);
 });
 
 test("race: two different shops, all units each, never more than two orders", () => {

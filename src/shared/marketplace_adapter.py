@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 
 
 class MarketplaceAdapter(ABC):
-    """Every marketplace (eBay, Amazon, ...) implements this interface."""
+    """Every marketplace (Amazon, eBay, ...) implements this interface."""
 
-    # Lowercase channel name, e.g. "ebay".
+    # Lowercase channel name, e.g. "amazon".
     channel_name: str = ""
 
     @abstractmethod

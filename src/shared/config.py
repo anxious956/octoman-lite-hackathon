@@ -3,12 +3,13 @@
 import logging
 import os
 
-# Marketplace id -> listing currency. The four eBay sites OctoMan Lite sells on.
+# Marketplace key -> listing currency. The four Amazon stores OctoMan Lite sells on.
+# Keys follow OctoMan's channel naming (AMAZON_UK, not AMAZON_GB).
 MARKETPLACES: dict[str, str] = {
-    "EBAY_US": "USD",
-    "EBAY_GB": "GBP",
-    "EBAY_DE": "EUR",
-    "EBAY_TR": "TRY",
+    "AMAZON_US": "USD",
+    "AMAZON_UK": "GBP",
+    "AMAZON_DE": "EUR",
+    "AMAZON_TR": "TRY",
 }
 
 BASE_CURRENCY = "USD"

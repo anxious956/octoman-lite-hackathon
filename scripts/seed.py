@@ -2,7 +2,7 @@
 """Seed OctoMan Lite with synthetic products (and optionally reset the demo).
 
 All data here is made up: product names, offer ids and prices are synthetic.
-Every product is listed on eBay US, GB, DE and TR with a local-currency price.
+Every product is listed on Amazon US, UK, DE and TR with a local-currency price.
 
 Usage:
   python scripts/seed.py --dry-run                     # print the items, no AWS

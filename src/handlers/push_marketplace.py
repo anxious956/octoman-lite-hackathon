@@ -19,7 +19,7 @@ import os
 from botocore.exceptions import ClientError
 
 from shared import db
-from shared.adapters.ebay_adapter import EbayAdapter
+from shared.adapters.amazon_adapter import AmazonAdapter
 from shared.config import get_logger
 
 logger = get_logger("octoman_lite.push_marketplace")
@@ -66,13 +66,13 @@ def handler(event, context):
     sku = order["sku"]
     qty = max(0, int(stock["new_stock"]))
     version = int(stock["stock_version"])
-    offer_id = (stock.get("offers") or {}).get(mp, "")
-    adapter = EbayAdapter()
+    seller_sku = (stock.get("seller_skus") or {}).get(mp, "")
+    adapter = AmazonAdapter()
 
     result = {
-        "channel": "EBAY",
+        "channel": "AMAZON",
         "marketplace_id": mp,
-        "external_id": offer_id,
+        "external_id": seller_sku,
         "quantity": qty,
         "mode": adapter.mode,
         "status": "ok",
@@ -80,7 +80,7 @@ def handler(event, context):
         "request": None,
     }
 
-    if not offer_id:
+    if not seller_sku:
         result.update(status="skipped", detail=f"{sku} is not listed on {mp}")
         return result
 
@@ -89,12 +89,12 @@ def handler(event, context):
         sync_status = "origin"
     else:
         try:
-            pushed = adapter.update_inventory(TENANT_ID, offer_id, qty, marketplace_id=mp)
+            pushed = adapter.update_inventory(TENANT_ID, seller_sku, qty, marketplace_id=mp)
             result["request"] = (pushed or {}).get("request")
             result["detail"] = "mock: request built, not sent" if adapter.mode == "mock" else "sent"
             sync_status = "synced"
         except Exception as e:  # never fail the order because one marketplace failed
-            logger.error("Stock push failed: sku=%s mp=%s offer=%s err=%s", sku, mp, offer_id, e)
+            logger.error("Stock push failed: sku=%s mp=%s seller_sku=%s err=%s", sku, mp, seller_sku, e)
             result.update(status="error", detail=str(e))
             sync_status = "error"
 

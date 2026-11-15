@@ -23,7 +23,7 @@ Parameters:
     Default: mock
     AllowedValues: [mock, live]
     Description: >
-      mock = build the real eBay request but do not send it (default).
+      mock = build the real Amazon SP-API request but do not send it (default).
       live = not available in OctoMan Lite (needs the OctoMan OAuth token store).
 
   DefaultLowStockThreshold:

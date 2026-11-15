@@ -13,13 +13,17 @@ _ORDER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _SKU_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 
+_ALIASES = {"GB": "UK"}  # people write either for the United Kingdom store
+
+
 def normalize_marketplace(value) -> str | None:
-    """Accept "DE", "de", "EBAY_DE" or "ebay_de"; return "EBAY_DE" or None."""
+    """Accept "DE", "de", "AMAZON_DE" or "amazon_de" (and GB for UK); return "AMAZON_DE" or None."""
     if not isinstance(value, str):
         return None
     mp = value.strip().upper()
-    if not mp.startswith("EBAY_"):
-        mp = f"EBAY_{mp}"
+    if mp.startswith("AMAZON_"):
+        mp = mp[len("AMAZON_"):]
+    mp = f"AMAZON_{_ALIASES.get(mp, mp)}"
     return mp if mp in MARKETPLACES else None
 
 
@@ -34,7 +38,7 @@ def validate_order_request(body) -> tuple[dict, list[str]]:
     mp = normalize_marketplace(body.get("marketplace"))
     if mp is None:
         allowed = ", ".join(sorted(MARKETPLACES))
-        errors.append(f"marketplace must be one of {allowed} (or US, GB, DE, TR)")
+        errors.append(f"marketplace must be one of {allowed} (or US, UK, DE, TR)")
     else:
         clean["marketplace"] = mp
 

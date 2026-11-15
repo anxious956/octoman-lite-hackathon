@@ -9,8 +9,8 @@ from decimal import ROUND_FLOOR, Decimal
 
 # Fixed demo multipliers for list prices only (orders are converted with live
 # ECB rates by the workflow). Units of local currency per 1 USD.
-LIST_PRICE_RATES = {"EBAY_US": ("USD", Decimal("1")), "EBAY_GB": ("GBP", Decimal("0.76")),
-                    "EBAY_DE": ("EUR", Decimal("0.90")), "EBAY_TR": ("TRY", Decimal("50"))}
+LIST_PRICE_RATES = {"AMAZON_US": ("USD", Decimal("1")), "AMAZON_UK": ("GBP", Decimal("0.76")),
+                    "AMAZON_DE": ("EUR", Decimal("0.90")), "AMAZON_TR": ("TRY", Decimal("50"))}
 
 # sku, title, USD price, stock, low-stock threshold, demo role
 PRODUCTS = [
@@ -50,11 +50,12 @@ def build_items(now: str, version_base: int = 0) -> list[dict]:
     New orders continue from version_base + 1.
     """
     items = []
-    for i, (sku, title, usd, stock, threshold, _role) in enumerate(PRODUCTS, start=1):
+    for sku, title, usd, stock, threshold, _role in PRODUCTS:
         listings = {}
         for mp, (currency, _) in LIST_PRICE_RATES.items():
             listings[mp] = {
-                "offer_id": f"MOCK-OFFER-{mp[-2:]}-{i:03d}",
+                # Amazon identifies a seller's listing by its seller SKU in each store.
+                "seller_sku": sku,
                 "price": _local_price(Decimal(usd), mp),
                 "currency": currency,
                 "listed_qty": stock,
