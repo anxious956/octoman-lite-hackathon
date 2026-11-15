@@ -337,7 +337,7 @@ function renderFlow() {
   });
   const head = $("flow-order");
   if (!fo) {
-    head.replaceChildren("Place an order below to watch it go through.");
+    head.replaceChildren('Open "Try the demo" (bottom right) to place an order.');
     return;
   }
   const m = D.MARKET_BY_ID[fo.marketplace];
@@ -361,7 +361,8 @@ function renderTryit() {
     ? "Everything is sold out. Put the stock back?"
     : "Each button places real orders on this demo and picks a product for you.");
   // Restock: a quiet secondary action, the primary one when nothing is left to sell.
-  document.querySelector(".tryit").classList.toggle("is-soldout", soldOut);
+  $("demo").classList.toggle("is-soldout", soldOut);
+  setText($("demo-open-text"), soldOut ? "Sold out: restock the demo" : "Try the demo");
   const restock = $("restock");
   restock.classList.toggle("btn--brand", soldOut);
   restock.disabled = !API || state.resetting || Date.now() < state.restockRestUntil;
@@ -394,6 +395,7 @@ async function restock() {
   setTimeout(renderTryit, RESTOCK_REST_MS + 30);
   if (res.status === 200) {
     toast("Demo restocked: every product is back on the shelf and the order list is empty.", "ok");
+    closeDemo(false);
     state.focusedOrderId = null;
     state.expandedOrderId = null;
     state.lastSku = null;
@@ -789,7 +791,26 @@ function announceRace(p, orders) {
   placeOrders(p, orders);
 }
 
+// ── the corner demo panel ───────────────────────────────────────────
+function openDemo() {
+  $("demo-panel").hidden = false;
+  $("demo-open").setAttribute("aria-expanded", "true");
+  const first = $("demo-panel").querySelector(".story:not(:disabled)") || $("restock");
+  first.focus();
+}
+
+function closeDemo(returnFocus = true) {
+  if ($("demo-panel").hidden) return;
+  $("demo-panel").hidden = true;
+  $("demo-open").setAttribute("aria-expanded", "false");
+  state.confirmRestock = false;
+  renderTryit();
+  if (returnFocus) $("demo-open").focus();
+}
+
 function runScenario(name) {
+  closeDemo(false); // get out of the way so the visitor watches the shelf and the flow
+
   const ps = state.products;
   if (name === "sell") {
     const pick = D.pickSellOne(ps);
@@ -862,6 +883,14 @@ function wire() {
     how.querySelector("summary").focus({ preventScroll: true });
   });
   for (const b of document.querySelectorAll(".story")) b.addEventListener("click", () => runScenario(b.dataset.scenario));
+  $("demo-open").addEventListener("click", () => ($("demo-panel").hidden ? openDemo() : closeDemo()));
+  $("demo-close").addEventListener("click", () => closeDemo());
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("demo-panel").hidden && !state.confirmRestock) closeDemo();
+  });
+  document.addEventListener("click", (e) => {
+    if (!$("demo-panel").hidden && !$("demo").contains(e.target)) closeDemo(false);
+  });
   for (const b of document.querySelectorAll(".segmented__btn")) b.addEventListener("click", () => setFilter(b.dataset.filter));
   // Keep relative times ("12 s ago") fresh without polling the API.
   setInterval(() => { if (!document.hidden && state.loaded) { renderFlow(); renderOrders(); } }, 15000);
