@@ -626,7 +626,8 @@ function renderOrders() {
     refs.li.classList.toggle("is-blocked", st.key === "blocked");
     refs.li.classList.toggle("is-focused", key === focusId);
     setText(refs.what, `${o.quantity} × ${productTitle(o.sku)}`);
-    refs.where.replaceChildren(...(m ? [flag(m)] : []), el("span", { text: `${m ? m.name : o.marketplace} · ${D.timeAgo(o.created_at)}` }));
+    refs.where.replaceChildren(...(m ? [flag(m)] : []), el("span", null, [
+      `${m ? m.name : o.marketplace} · `, el("span", { class: "nowrap", text: D.timeAgo(o.created_at) })]));
     setText(refs.total, o.total !== undefined ? D.formatMoney(o.total, o.currency) : "");
     const usd = D.usdTotal(o);
     setText(refs.usd, usd !== null && o.currency !== "USD" ? `${D.formatMoney(usd, "USD")} · ECB` : "");
@@ -654,8 +655,8 @@ function renderAlerts() {
       img(D.productImage(a.sku), "alert__img", 32),
       el("div", null, [
         el("div", { class: "alert__what", text: a.title || productTitle(a.sku) }),
-        el("div", { class: "alert__why",
-          text: `${a.stock} left · warn below ${a.threshold} · ${D.timeAgo(a.updated_at)}` }),
+        el("div", { class: "alert__why" }, [
+          `${a.stock} left · warn below ${a.threshold} · `, el("span", { class: "nowrap", text: D.timeAgo(a.updated_at) })]),
       ]),
       el("span", { class: `chip chip--${out ? "out" : "low"}` }, [icon(out ? "octagon-x" : "triangle-alert"), out ? "Sold out" : "Running low"]),
     ]);
