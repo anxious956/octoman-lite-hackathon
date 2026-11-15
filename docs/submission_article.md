@@ -301,6 +301,9 @@ CloudFront reads the same API.
   the word "Amazon" and the store domains (amazon.com, .co.uk, .de, .com.tr) as
   plain text. The challenge is run by AWS, but check whether that counts as a
   "third party trademark" under the Terms; if in doubt, ask before recording.
+- **Don't scroll to the page footer** while recording: it names the font,
+  flag and icon sets (IBM Plex, flag-icons, Lucide). In **Technical details**,
+  show the step-to-service table and the diagram, not the credits.
 - Upload it as **public** on YouTube, Vimeo, Facebook Video or Youku.
 - Paste the link into the project's **"demo"** field, and replace `<VIDEO_URL>`
   above.
