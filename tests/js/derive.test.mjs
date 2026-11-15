@@ -158,3 +158,11 @@ test("tabs: arrow keys wrap, Home and End jump, other keys do nothing", () => {
   assert.equal(D.tabAfterKey("products", "End"), "how");
   assert.equal(D.tabAfterKey("live", "Enter"), null);
 });
+
+test("motion: numbers animate only when a previous value existed and changed", () => {
+  assert.equal(D.shouldAnimate(undefined, "5"), false); // first render
+  assert.equal(D.shouldAnimate("", "5"), false);
+  assert.equal(D.shouldAnimate("5", "5"), false);      // polling, same value
+  assert.equal(D.shouldAnimate("5", 5), false);
+  assert.equal(D.shouldAnimate("5", "4"), true);
+});

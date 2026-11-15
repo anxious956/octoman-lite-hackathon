@@ -37,6 +37,8 @@ const state = {
   resetting: false,
   restockRestUntil: 0,
   tab: "live",
+  ordersShown: false, // after the first orders render, new rows slide in
+  alertsSeen: null,   // keys of the warnings already on screen
 };
 const prev = { listed: {}, stock: {}, shelfSku: null, shelfStock: null };
 
@@ -122,6 +124,48 @@ function setText(node, text) {
   if (node.textContent !== t) node.textContent = t;
 }
 
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+/**
+ * Show a number; when it changes, the old value rolls out and the new one rolls in
+ * (transform/opacity only, ~400 ms). `delay` staggers a group, e.g. the four stores.
+ * An unchanged value does nothing, so polling never replays the animation.
+ */
+function rollTo(node, value, animate = true, delay = 0) {
+  const v = String(value ?? "");
+  const before = node.dataset.v;
+  if (before === v) return;
+  node.dataset.v = v;
+  clearTimeout(node._roll);
+  if (!animate || REDUCED_MOTION.matches || !D.shouldAnimate(before, v)) {
+    node.classList.remove("roll");
+    node.textContent = v;
+    return;
+  }
+  node._roll = setTimeout(() => {
+    node.classList.add("roll");
+    node.replaceChildren(el("span", { class: "roll__old", "aria-hidden": "true", text: before }),
+      el("span", { class: "roll__new", text: v }));
+    node._roll = setTimeout(() => { node.classList.remove("roll"); node.textContent = node.dataset.v; }, 460);
+  }, delay);
+}
+
+/** A state label: a coloured dot plus plain text (no box). */
+function stateLabel(kind, text) {
+  return el("span", { class: `state state--${kind}`, text });
+}
+
+/** Play a one-shot entrance class, and drop it afterwards so a later DOM move can't replay it. */
+function enter(node, cls) {
+  node.classList.add(cls);
+  node.addEventListener("animationend", () => node.classList.remove(cls), { once: true });
+}
+
+/** Put `node` at position `i` of `list`, touching the DOM only if it is somewhere else. */
+function placeAt(list, node, i) {
+  if (list.children[i] !== node) list.insertBefore(node, list.children[i] || null);
+}
+
 function flash(node, cls = "is-updated", delay = 0) {
   setTimeout(() => {
     node.classList.add(cls);
@@ -159,8 +203,7 @@ function unitsVisual(p, maxUnits) {
 
 function statusChip(p) {
   const s = D.productStatus(p);
-  const ic = s === "ok" ? "check" : s === "low" ? "triangle-alert" : "octagon-x";
-  return el("span", { class: `chip chip--${s}` }, [icon(ic), D.STATUS_TEXT[s]]);
+  return s === "ok" ? "" : stateLabel(s, D.STATUS_TEXT[s]);
 }
 
 const SYNC_TEXT = { seeded: "Listed", synced: "Updated", origin: "Sold here", error: "Update failed" };
@@ -266,13 +309,8 @@ function renderShelf(maxUnits) {
   shelfRefs.img.alt = p.title;
   setText(shelfRefs.title, p.title);
   shelfRefs.title.title = `${p.title} (${p.sku})`;
-  setText(shelfRefs.num, left);
+  rollTo(shelfRefs.num, left, sameProduct);
   setText(shelfRefs.unitsLabel, left === 1 ? "unit left" : "units left");
-  if (sameProduct && prev.shelfStock !== null && left < prev.shelfStock) {
-    shelfRefs.num.classList.remove("is-drop");
-    void shelfRefs.num.offsetWidth; // restart the animation
-    shelfRefs.num.classList.add("is-drop");
-  }
   shelfRefs.visual.replaceChildren(unitsVisual(p, maxUnits),
     el("span", { class: "muted small", text: `Warn below ${D.warnBelow(p)}` }));
   shelfRefs.meta.replaceChildren(statusChip(p));
@@ -283,11 +321,11 @@ function renderShelf(maxUnits) {
     const isOrigin = fo && fo.status === "COMPLETED" && fo.sku === p.sku && fo.marketplace === m.id;
     r.node.classList.toggle("is-origin", Boolean(isOrigin));
     if (!l) {
-      setText(r.qty, "–"); setText(r.price, "not listed"); setText(r.sync, "");
+      rollTo(r.qty, "–", false); setText(r.price, "not listed"); setText(r.sync, "");
       return;
     }
     const prevQty = prev.listed[`${p.sku}|${m.id}`];
-    setText(r.qty, l.listed_qty);
+    rollTo(r.qty, l.listed_qty, sameProduct, i * 120);
     setText(r.price, D.formatMoney(l.price, l.currency));
     setText(r.sync, ` · ${SYNC_TEXT[l.sync_status] || l.sync_status || ""}`);
     // The four shops light up one after another, in reading order.
@@ -320,6 +358,7 @@ function buildFlow() {
     const li = el("li", { class: "step", dataset: { state: "waiting" } }, [
       node, el("span", { class: "step__name", text: step.name }),
       el("span", { class: "step__cap", text: step.caption }), note]);
+    li.style.setProperty("--i", String(flowRefs.length));
     ol.appendChild(li);
     flowRefs.push({ li, node, note, step });
   }
@@ -506,23 +545,22 @@ function renderProducts(maxUnits) {
   const focusSku = (focusedOrder() || {}).sku;
   // In-stock products first (API order within each group), so a visitor never lands
   // on a wall of sold-out rows. Rows are moved, never rebuilt.
-  for (const p of D.inStockFirst(state.products)) {
+  D.inStockFirst(state.products).forEach((p, idx) => {
     const refs = rowRefs.get(p.sku) || buildRow(p);
-    if (refs.li.parentNode !== list || list.lastElementChild !== refs.li) list.appendChild(refs.li);
+    placeAt(list, refs.li, idx);
     refs.li.hidden = !visible.has(p.sku);
     refs.li.classList.toggle("is-focused", p.sku === focusSku);
     const left = D.unitsLeft(p);
     setText(refs.title, p.title);
     setText(refs.sku, p.sku);
-    setText(refs.num, left);
+    rollTo(refs.num, left);
     setText(refs.numLabel, "left");
-    if (prev.stock[p.sku] !== undefined && prev.stock[p.sku] !== left) flash(refs.num, "is-drop");
     refs.visual.replaceChildren(unitsVisual(p, maxUnits));
     refs.chip.replaceChildren(statusChip(p));
     D.MARKETS.forEach((m, i) => {
       const r = refs.markets[m.id];
       const l = (p.listings || {})[m.id];
-      setText(r.qty, l ? l.listed_qty : "–");
+      rollTo(r.qty, l ? l.listed_qty : "–", Boolean(l), i * 120);
       setText(r.price, l ? D.formatMoney(l.price, l.currency) : "not listed");
       r.cell.title = l ? `${m.name} · ${SYNC_TEXT[l.sync_status] || l.sync_status}` : `${m.name}: not listed`;
       const k = `${p.sku}|${m.id}`;
@@ -531,7 +569,7 @@ function renderProducts(maxUnits) {
     // Never overwrite what the visitor is typing.
     if (document.activeElement !== refs.input) refs.input.value = String(state.qtyBySku[p.sku] || 1);
     renderRowButtons(p.sku);
-  }
+  });
   for (const [sku, refs] of rowRefs) {
     if (!state.products.some((p) => p.sku === sku)) { refs.li.remove(); rowRefs.delete(sku); }
   }
@@ -616,11 +654,13 @@ function renderOrders() {
   const rows = orderRows();
   const keep = new Set();
   const focusId = (focusedOrder() || {}).order_id;
-  rows.forEach((o) => {
+  rows.forEach((o, idx) => {
     const key = o.order_id;
     keep.add(key);
-    const refs = orderRefs.get(key) || buildOrder(o);
-    list.appendChild(refs.li); // moves existing nodes into the new order without rebuilding them
+    const known = orderRefs.get(key);
+    const refs = known || buildOrder(o);
+    placeAt(list, refs.li, idx); // existing rows move only if their place changed
+    if (!known && state.ordersShown) enter(refs.li, "is-new");
     const m = D.MARKET_BY_ID[o.marketplace];
     const st = o.pending ? { key: "processing", text: "Processing" } : D.orderStatus(o);
     refs.li.classList.toggle("is-blocked", st.key === "blocked");
@@ -632,8 +672,10 @@ function renderOrders() {
     const usd = D.usdTotal(o);
     setText(refs.usd, usd !== null && o.currency !== "USD" ? `${D.formatMoney(usd, "USD")} · ECB` : "");
     refs.usd.title = D.fxNote(o);
-    const ic = st.key === "sold" ? "check" : st.key === "blocked" ? "octagon-x" : "refresh-cw";
-    refs.chip.replaceChildren(el("span", { class: `chip chip--${st.key}` }, [icon(ic), st.key === "blocked" ? "Blocked" : st.text]));
+    if (refs.chip.dataset.k !== st.key) {
+      refs.chip.dataset.k = st.key;
+      refs.chip.replaceChildren(stateLabel(st.key, st.key === "blocked" ? "Blocked" : st.text));
+    }
     refs.why.hidden = st.key !== "blocked";
     setText(refs.why, st.key === "blocked" ? D.blockedSentence(o) : "");
     refs.btn.setAttribute("aria-label", `${o.quantity} × ${productTitle(o.sku)} in ${m ? m.name : o.marketplace}: ${st.text}. Show details.`);
@@ -643,6 +685,7 @@ function renderOrders() {
     if (!keep.has(key)) { refs.li.remove(); orderRefs.delete(key); }
   }
   $("orders-empty").hidden = rows.length > 0;
+  state.ordersShown = true;
 }
 
 // ── render: alerts ──────────────────────────────────────────────────
@@ -658,9 +701,13 @@ function renderAlerts() {
         el("div", { class: "alert__why" }, [
           `${a.stock} left · warn below ${a.threshold} · `, el("span", { class: "nowrap", text: D.timeAgo(a.updated_at) })]),
       ]),
-      el("span", { class: `chip chip--${out ? "out" : "low"}` }, [icon(out ? "octagon-x" : "triangle-alert"), out ? "Sold out" : "Running low"]),
+      stateLabel(out ? "out" : "low", out ? "Sold out" : "Running low"),
     ]);
   });
+  const seen = state.alertsSeen;
+  const keys = state.alerts.map((a) => `${a.sku}|${a.updated_at}`);
+  items.forEach((li, i) => { if (seen && !seen.has(keys[i])) enter(li, "is-new"); });
+  state.alertsSeen = new Set(keys);
   $("alerts").replaceChildren(...items);
   $("alerts-empty").hidden = items.length > 0;
 }
@@ -818,10 +865,20 @@ function showTab(name, { push = true } = {}) {
     tab.tabIndex = on ? 0 : -1;
     $(`panel-${id}`).hidden = !on;
   }
+  placeInk();
+  if (changed) enter($(`panel-${name}`), "is-entering");
   if (push && location.hash !== `#${name}`) {
     history.pushState(null, "", `${location.pathname}${location.search}#${name}`);
   }
   if (changed && window.scrollY > 0) window.scrollTo(0, 0);
+}
+
+/** Slide the single underline under the selected tab (transform only). */
+function placeInk() {
+  const tab = $(`tab-${state.tab}`);
+  const ink = $("tabs-ink");
+  if (!tab || !ink || !tab.offsetWidth) return;
+  ink.style.transform = `translateX(${tab.offsetLeft}px) scaleX(${tab.offsetWidth / 100})`;
 }
 
 // ── the corner demo panel ───────────────────────────────────────────
@@ -941,6 +998,15 @@ wire();
 // something else (or something unknown) is corrected in place, without a history entry.
 const initialTab = params.get("focus") ? "live" : D.tabFromHash(location.hash);
 showTab(initialTab, { push: false });
+{
+  const ink = $("tabs-ink");
+  ink.style.transition = "none";
+  placeInk();
+  void ink.offsetWidth;
+  ink.style.transition = "";
+  window.addEventListener("resize", placeInk);
+  if (document.fonts) document.fonts.ready.then(placeInk);
+}
 if (location.hash && location.hash !== `#${initialTab}`) {
   history.replaceState(null, "", `${location.pathname}${location.search}#${initialTab}`);
 }

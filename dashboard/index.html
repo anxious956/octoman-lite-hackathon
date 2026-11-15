@@ -73,6 +73,7 @@
       <button class="tab" type="button" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="true">Live</button>
       <button class="tab" type="button" role="tab" id="tab-products" data-tab="products" aria-controls="panel-products" aria-selected="false" tabindex="-1">Products</button>
       <button class="tab" type="button" role="tab" id="tab-how" data-tab="how" aria-controls="panel-how" aria-selected="false" tabindex="-1">How it works</button>
+      <span class="tabs__ink" id="tabs-ink" aria-hidden="true"></span>
     </div>
   </div>
 </nav>
@@ -93,7 +94,7 @@
       <div class="hero__head">
         <h1 id="hero-title">One shelf, four stores</h1>
         <p class="hero__lede">When one store sells, all four update.</p>
-        <p class="hero__aws"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Runs serverless on AWS</p>
+        <p class="hero__aws">Runs serverless on AWS</p>
       </div>
       <div class="shelf" id="shelf" aria-live="polite">
         <div class="shop" data-market="AMAZON_US"></div>
@@ -167,16 +168,16 @@
           <svg class="arch" viewBox="0 0 960 336" role="img" aria-labelledby="arch-title arch-desc">
             <title id="arch-title">Architecture</title>
             <desc id="arch-desc">The browser calls an HTTP API. A Lambda function starts a Step Functions workflow that reserves stock in DynamoDB, updates the four Amazon stores in parallel, converts the total with ECB rates, raises low-stock warnings and saves a receipt to S3.</desc>
-            <g class="arch__box"><rect x="16" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="48" y="136" width="24" height="24" aria-hidden="true"/><image href="assets/img/aws/cloudfront.png" x="80" y="136" width="24" height="24" aria-hidden="true"/><text x="76" y="182">This page</text><text class="arch__cap" x="76" y="200">S3 + CloudFront</text></g>
-            <g class="arch__box"><rect x="176" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/api-gateway.png" x="220" y="132" width="32" height="32" aria-hidden="true"/><text x="236" y="182">HTTP API</text><text class="arch__cap" x="236" y="200">API Gateway</text></g>
-            <g class="arch__box"><rect x="336" y="122" width="120" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="380" y="132" width="32" height="32" aria-hidden="true"/><text x="396" y="182">Take the order</text><text class="arch__cap" x="396" y="200">Lambda</text></g>
-            <g class="arch__box arch__box--wide"><rect x="496" y="24" width="448" height="288" rx="4"/><image href="assets/img/aws/step-functions.png" x="508" y="34" width="24" height="24" aria-hidden="true"/><text class="arch__cap arch__cap--start" x="540" y="51">Step Functions workflow</text></g>
-            <g class="arch__box"><rect x="516" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="564" y="82" width="32" height="32" aria-hidden="true"/><text x="580" y="132">Check the shelf</text><text class="arch__cap" x="580" y="150">DynamoDB</text></g>
-            <g class="arch__box"><rect x="656" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="704" y="82" width="32" height="32" aria-hidden="true"/><text x="720" y="132">Update 4 stores</text><text class="arch__cap" x="720" y="150">in parallel</text></g>
-            <g class="arch__box"><rect x="796" y="72" width="128" height="92" rx="4"/><image href="assets/img/aws/lambda.png" x="844" y="82" width="32" height="32" aria-hidden="true"/><text x="860" y="132">Convert to $</text><text class="arch__cap" x="860" y="150">Lambda + ECB rates</text></g>
-            <g class="arch__box"><rect x="516" y="200" width="128" height="92" rx="4"/><text x="580" y="240">Blocked</text><text class="arch__cap" x="580" y="258">if not enough</text></g>
-            <g class="arch__box"><rect x="656" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/dynamodb.png" x="704" y="210" width="32" height="32" aria-hidden="true"/><text x="720" y="260">Low-stock</text><text class="arch__cap" x="720" y="278">DynamoDB</text></g>
-            <g class="arch__box"><rect x="796" y="200" width="128" height="92" rx="4"/><image href="assets/img/aws/s3.png" x="844" y="210" width="32" height="32" aria-hidden="true"/><text x="860" y="260">Receipt</text><text class="arch__cap" x="860" y="278">S3</text></g>
+            <g class="arch__box"><rect x="16" y="122" width="120" height="92" rx="8"/><image href="assets/img/aws/s3.png" x="48" y="136" width="24" height="24" aria-hidden="true"/><image href="assets/img/aws/cloudfront.png" x="80" y="136" width="24" height="24" aria-hidden="true"/><text x="76" y="182">This page</text><text class="arch__cap" x="76" y="200">S3 + CloudFront</text></g>
+            <g class="arch__box"><rect x="176" y="122" width="120" height="92" rx="8"/><image href="assets/img/aws/api-gateway.png" x="220" y="132" width="32" height="32" aria-hidden="true"/><text x="236" y="182">HTTP API</text><text class="arch__cap" x="236" y="200">API Gateway</text></g>
+            <g class="arch__box"><rect x="336" y="122" width="120" height="92" rx="8"/><image href="assets/img/aws/lambda.png" x="380" y="132" width="32" height="32" aria-hidden="true"/><text x="396" y="182">Take the order</text><text class="arch__cap" x="396" y="200">Lambda</text></g>
+            <g class="arch__box arch__box--wide"><rect x="496" y="24" width="448" height="288" rx="12"/><image href="assets/img/aws/step-functions.png" x="508" y="34" width="24" height="24" aria-hidden="true"/><text class="arch__cap arch__cap--start" x="540" y="51">Step Functions workflow</text></g>
+            <g class="arch__box"><rect x="516" y="72" width="128" height="92" rx="8"/><image href="assets/img/aws/dynamodb.png" x="564" y="82" width="32" height="32" aria-hidden="true"/><text x="580" y="132">Check the shelf</text><text class="arch__cap" x="580" y="150">DynamoDB</text></g>
+            <g class="arch__box"><rect x="656" y="72" width="128" height="92" rx="8"/><image href="assets/img/aws/lambda.png" x="704" y="82" width="32" height="32" aria-hidden="true"/><text x="720" y="132">Update 4 stores</text><text class="arch__cap" x="720" y="150">in parallel</text></g>
+            <g class="arch__box"><rect x="796" y="72" width="128" height="92" rx="8"/><image href="assets/img/aws/lambda.png" x="844" y="82" width="32" height="32" aria-hidden="true"/><text x="860" y="132">Convert to $</text><text class="arch__cap" x="860" y="150">Lambda + ECB rates</text></g>
+            <g class="arch__box"><rect x="516" y="200" width="128" height="92" rx="8"/><text x="580" y="240">Blocked</text><text class="arch__cap" x="580" y="258">if not enough</text></g>
+            <g class="arch__box"><rect x="656" y="200" width="128" height="92" rx="8"/><image href="assets/img/aws/dynamodb.png" x="704" y="210" width="32" height="32" aria-hidden="true"/><text x="720" y="260">Low-stock</text><text class="arch__cap" x="720" y="278">DynamoDB</text></g>
+            <g class="arch__box"><rect x="796" y="200" width="128" height="92" rx="8"/><image href="assets/img/aws/s3.png" x="844" y="210" width="32" height="32" aria-hidden="true"/><text x="860" y="260">Receipt</text><text class="arch__cap" x="860" y="278">S3</text></g>
             <g class="arch__lines">
               <path d="M136 168 H176 M296 168 H336 M456 168 H496 M644 118 H656 M784 118 H796 M580 164 V200 M860 164 V182 H720 V200 M784 246 H796"/>
             </g>

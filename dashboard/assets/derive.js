@@ -105,6 +105,17 @@ export function summary(orders, alerts) {
   };
 }
 
+// ── motion ──────────────────────────────────────────────────────────
+
+/**
+ * Whether a number on screen should animate from `prev` to `next`: only when there was
+ * a previous value and it really changed, so a polling re-render never replays motion.
+ */
+export function shouldAnimate(prev, next) {
+  if (prev === undefined || prev === null || prev === "") return false;
+  return String(prev) !== String(next);
+}
+
 // ── tabs ────────────────────────────────────────────────────────────
 
 /** The three views, in tab order. The first one is the default. */
