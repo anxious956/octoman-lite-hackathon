@@ -122,3 +122,10 @@ test("in-stock products come first, order kept inside each group", () => {
   const ps = [product("A", 0), product("B", 3), product("C", 0), product("D", 9)];
   assert.deepEqual(D.inStockFirst(ps).map((p) => p.sku), ["B", "D", "A", "C"]);
 });
+
+test("data from an older version (no current store listings) is detected", () => {
+  const old = { sku: "A", stock_on_hand: 5, listings: { EBAY_DE: { listed_qty: 5 } } };
+  assert.equal(D.hasNoKnownListings([old]), true);
+  assert.equal(D.hasNoKnownListings([old, product("B", 3)]), false);
+  assert.equal(D.pickSellOne([old]), null); // nothing to sell until restocked
+});

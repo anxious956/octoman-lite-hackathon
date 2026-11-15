@@ -33,6 +33,13 @@ plan is to leave the stack running until the winners are announced, with a $5
 monthly AWS Budgets alert in that account (README, "If you leave it running"),
 and to run `sam delete` afterwards.
 
+## After deploying the Amazon version
+
+The deployed tables still hold the eBay-era store keys (EBAY_*). The first step
+after `sam deploy` is **Restock the demo** on the dashboard (or
+`python scripts/seed.py --reset`); until then the page shows "Restock the demo to
+start" and orders for those products are refused (422, not listed).
+
 ## Verification status
 
 - Local: 91 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a

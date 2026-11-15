@@ -215,6 +215,11 @@ python scripts/seed.py --profile <your-profile> --region <region> --reset
 
 Both use the same product list (`src/shared/seed_data.py`).
 
+> **Upgrading a stack deployed before the switch from eBay to Amazon:** the stored
+> products still use the old store keys. After `sam deploy`, open the dashboard and
+> choose **Restock the demo** once (the page asks for it). It rewrites every
+> product with the Amazon stores and clears the old orders.
+
 ### Try it with curl
 
 ```bash

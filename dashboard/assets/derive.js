@@ -36,6 +36,11 @@ export function filterProducts(products, filter) {
   return products;
 }
 
+/** True when no product has a listing on any current store (data from an older version). */
+export function hasNoKnownListings(products) {
+  return products.every((p) => !MARKETS.some((m) => p.listings && p.listings[m.id]));
+}
+
 /** In-stock products first, sold-out last; keeps the original order inside each group. */
 export function inStockFirst(products) {
   return [...products.filter((p) => unitsLeft(p) > 0), ...products.filter((p) => unitsLeft(p) <= 0)];

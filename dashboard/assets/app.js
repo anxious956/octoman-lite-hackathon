@@ -350,7 +350,11 @@ function renderFlow() {
 
 // ── render: try it ──────────────────────────────────────────────────
 function renderTryit() {
-  const soldOut = state.loaded && state.products.length > 0 && inStockCount() === 0;
+  // Data written by an older version (e.g. eBay store keys) has no listing for any
+  // current store: lead with Restock, which rewrites every product in one click.
+  const outdated = state.loaded && state.products.length > 0 && D.hasNoKnownListings(state.products);
+  const soldOut = !outdated && state.loaded && state.products.length > 0 && inStockCount() === 0;
+  const needsRestock = outdated || soldOut;
   const picks = {
     sell: D.pickSellOne(state.products), low: D.pickLowStock(state.products),
     race: D.pickRace(state.products, () => 0), oversell: D.pickOversell(state.products),
@@ -358,14 +362,17 @@ function renderTryit() {
   for (const b of document.querySelectorAll(".story")) {
     b.disabled = !state.loaded || isBusy() || !picks[b.dataset.scenario];
   }
-  setText($("try-hint"), soldOut
-    ? "Everything is sold out. Put the stock back?"
-    : "Each button places real orders on this demo and picks a product for you.");
-  // Restock: a quiet secondary action, the primary one when nothing is left to sell.
-  $("demo").classList.toggle("is-soldout", soldOut);
-  setText($("demo-open-text"), soldOut ? "Sold out: restock the demo" : "Try the demo");
+  setText($("try-hint"), outdated
+    ? "The demo data is from an older version. Restock the demo to start."
+    : soldOut
+      ? "Everything is sold out. Put the stock back?"
+      : "Each button places real orders on this demo and picks a product for you.");
+  // Restock: a quiet secondary action, the primary one when nothing can be sold.
+  $("demo").classList.toggle("is-soldout", needsRestock);
+  setText($("demo-open-text"), outdated ? "Restock the demo to start"
+    : soldOut ? "Sold out: restock the demo" : "Try the demo");
   const restock = $("restock");
-  restock.classList.toggle("btn--brand", soldOut);
+  restock.classList.toggle("btn--brand", needsRestock);
   restock.disabled = !API || state.resetting || Date.now() < state.restockRestUntil;
   restock.setAttribute("aria-expanded", String(state.confirmRestock));
   $("restock-confirm").hidden = !state.confirmRestock;
