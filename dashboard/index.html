@@ -128,17 +128,17 @@
       <button class="story" type="button" data-scenario="sell">
         <svg class="icon" aria-hidden="true"><use href="#i-shopping-bag"/></svg>
         <span class="story__title">A customer in Germany buys one</span>
-        <span class="story__text">The shelf drops by one; all four shops follow.</span>
+        <span class="story__text">Shelf drops by one, all shops follow.</span>
       </button>
       <button class="story" type="button" data-scenario="low">
         <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
         <span class="story__title">Sell until stock runs low</span>
-        <span class="story__text">One order takes a product below its warning level.</span>
+        <span class="story__text">Takes a product below its warning level.</span>
       </button>
       <button class="story" type="button" data-scenario="race">
         <svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>
-        <span class="story__title">Two customers buy the last one at once</span>
-        <span class="story__text">Two shops order at once. Only one gets it.</span>
+        <span class="story__title">Two customers, one last item</span>
+        <span class="story__text">Both order at once. Only one gets it.</span>
       </button>
       <button class="story" type="button" data-scenario="oversell">
         <svg class="icon" aria-hidden="true"><use href="#i-ban"/></svg>
@@ -159,7 +159,7 @@
           <button type="button" class="segmented__btn" data-filter="out" aria-pressed="false">Sold out</button>
         </div>
       </div>
-      <p class="inventory__hint muted small">Big number: units left on the shelf. Below: what each eBay shop shows. Click a shop to make a customer there buy.</p>
+      <p class="inventory__hint muted small">Big number: units on the shelf. Below: each eBay shop. Click a shop to sell there.</p>
       <ul class="products" id="products" aria-busy="true">
         <li class="skeleton skeleton--row" aria-hidden="true"></li>
         <li class="skeleton skeleton--row" aria-hidden="true"></li>
@@ -178,7 +178,7 @@
           <li class="skeleton skeleton--order" aria-hidden="true"></li>
           <li class="skeleton skeleton--order" aria-hidden="true"></li>
         </ul>
-        <p class="empty" id="orders-empty" hidden>No orders yet. Use a button under "Try it".</p>
+        <p class="empty" id="orders-empty" hidden>No orders yet. Press a Try it button to place the first one.</p>
       </section>
       <section aria-labelledby="alerts-title">
         <div class="section-head">

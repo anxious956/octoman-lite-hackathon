@@ -36,6 +36,11 @@ export function filterProducts(products, filter) {
   return products;
 }
 
+/** In-stock products first, sold-out last; keeps the original order inside each group. */
+export function inStockFirst(products) {
+  return [...products.filter((p) => unitsLeft(p) > 0), ...products.filter((p) => unitsLeft(p) <= 0)];
+}
+
 export function productImage(sku) {
   return `assets/img/products/${String(sku).toLowerCase()}.svg`;
 }

@@ -117,3 +117,8 @@ test("money, quantities and the focused product", () => {
   assert.equal(D.focusProduct(ps, { sku: "A" }, "B").sku, "A");
   assert.equal(D.productImage("OCTO-MUG-001"), "assets/img/products/octo-mug-001.svg");
 });
+
+test("in-stock products come first, order kept inside each group", () => {
+  const ps = [product("A", 0), product("B", 3), product("C", 0), product("D", 9)];
+  assert.deepEqual(D.inStockFirst(ps).map((p) => p.sku), ["B", "D", "A", "C"]);
+});

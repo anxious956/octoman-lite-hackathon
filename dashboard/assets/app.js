@@ -234,8 +234,8 @@ function buildShelf() {
   core.append(shelfRefs.img, el("div", { class: "shelf__text" }, [
     el("div", { class: "shelf__label", text: "The shared shelf" }),
     shelfRefs.title,
-    el("div", { class: "shelf__units" }, [shelfRefs.num, shelfRefs.unitsLabel]),
-    shelfRefs.visual, shelfRefs.meta,
+    el("div", { class: "shelf__units" }, [shelfRefs.num, shelfRefs.unitsLabel, shelfRefs.meta]),
+    shelfRefs.visual,
   ]));
   shelfRefs.shops = {};
   for (const node of document.querySelectorAll(".shop")) {
@@ -271,9 +271,9 @@ function renderShelf(maxUnits) {
     void shelfRefs.num.offsetWidth; // restart the animation
     shelfRefs.num.classList.add("is-drop");
   }
-  shelfRefs.visual.replaceChildren(unitsVisual(p, maxUnits));
-  shelfRefs.meta.replaceChildren(statusChip(p),
+  shelfRefs.visual.replaceChildren(unitsVisual(p, maxUnits),
     el("span", { class: "muted small", text: `Warn below ${D.warnBelow(p)}` }));
+  shelfRefs.meta.replaceChildren(statusChip(p));
 
   D.MARKETS.forEach((m, i) => {
     const r = shelfRefs.shops[m.id];
@@ -498,9 +498,11 @@ function renderProducts(maxUnits) {
 
   const visible = new Set(D.filterProducts(state.products, state.filter).map((p) => p.sku));
   const focusSku = (focusedOrder() || {}).sku;
-  for (const p of state.products) {
+  // In-stock products first (API order within each group), so a visitor never lands
+  // on a wall of sold-out rows. Rows are moved, never rebuilt.
+  for (const p of D.inStockFirst(state.products)) {
     const refs = rowRefs.get(p.sku) || buildRow(p);
-    if (refs.li.parentNode !== list || list.lastElementChild !== refs.li) list.appendChild(refs.li); // keep API order
+    if (refs.li.parentNode !== list || list.lastElementChild !== refs.li) list.appendChild(refs.li);
     refs.li.hidden = !visible.has(p.sku);
     refs.li.classList.toggle("is-focused", p.sku === focusSku);
     const left = D.unitsLeft(p);
