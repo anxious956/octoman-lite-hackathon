@@ -399,6 +399,7 @@ section, .hero, .how { min-width: 0; }
 .arch__box--wide rect { fill: none; stroke-dasharray: 4 4; }
 .arch text { fill: var(--ink); font: 500 14px var(--sans); text-anchor: middle; }
 .arch .arch__cap { fill: var(--ink-3); font: 400 12px var(--sans); }
+.arch .arch__cap--start { text-anchor: start; }
 .arch__lines path { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
 .how__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s6); }
 .ticks { margin: 0; padding-left: 1.1em; color: var(--ink-2); display: grid; gap: var(--s2); }

@@ -44,6 +44,24 @@ Inlined as an SVG sprite in `index.html` (`<symbol id="i-...">`): `shopping-bag`
 | `img/logo.png` | The OctoMan octopus mascot, owned by the OctoMan project author; cropped and resized from the OctoMan brand artwork |
 | `img/favicon.png` | Same mascot at 48 px, used as the browser tab icon |
 
+## AWS service icons
+
+Used in the architecture diagram under "Technical details", from the official
+[AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) set. AWS states
+that customers and partners may use these icons to create architecture diagrams; they
+are used here unmodified (no recolouring, cropping or stretching), only scaled down to
+96 px PNG from the copies in `docs/aws-icons/`. The icons belong to Amazon Web Services
+and are not covered by this repository's licence.
+
+| File | Icon |
+|---|---|
+| `img/aws/cloudfront.png` | Amazon CloudFront, service icon |
+| `img/aws/s3.png` | Amazon S3, resource icon (S3 bucket) |
+| `img/aws/api-gateway.png` | Amazon API Gateway, service icon |
+| `img/aws/lambda.png` | AWS Lambda, service icon |
+| `img/aws/step-functions.png` | AWS Step Functions, service icon |
+| `img/aws/dynamodb.png` | Amazon DynamoDB, service icon |
+
 ## Product photos
 
 Photos from [Unsplash](https://unsplash.com), used under the

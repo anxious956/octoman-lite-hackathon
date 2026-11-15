@@ -86,6 +86,15 @@ def test_svgs_are_valid_and_inert(path):
     assert not re.search(r"<script|\son[a-z]+=|href=\"https?:", text, re.I)
 
 
+def test_svg_images_in_the_page_are_local_and_exist():
+    html = (DASHBOARD / "index.html").read_text(encoding="utf-8")
+    hrefs = re.findall(r'<image href="([^"]+)"', html)
+    assert hrefs, "the architecture diagram should show the AWS service icons"
+    for href in hrefs:
+        assert href.startswith("assets/img/aws/"), href
+        assert (DASHBOARD / href).is_file(), href
+
+
 def test_licence_texts_are_shipped():
     names = {p.name for p in (ASSETS / "licenses").iterdir()}
     assert {"OFL-IBM-Plex-Sans.txt", "OFL-IBM-Plex-Mono.txt", "MIT-flag-icons.txt", "ISC-lucide.txt"} <= names
