@@ -5,17 +5,25 @@ NOTE FOR THE AUTHOR (delete this block before posting):
   description. Put the public video link (under 3 minutes, showing the build
   running end to end) in the "demo" field, and the live dashboard / repo links
   where the form asks for them.
-- Qualification is pass/fail: a published written project (PART 1), a public
-  video under 3 minutes in the "demo" field, serverless AWS only, and an
-  original, previously unpublished project. See the VIDEO CHECKLIST at the end.
-- The optional AI-assistant line: keep or delete it after checking the Terms
-  for anything about AI tools.
+- From the official rules (pass/fail): the written project must be published on
+  AWS Builder Center; the video goes in the "demo" field, under 3 minutes,
+  public on YouTube, Vimeo, Facebook Video or Youku, with no third-party
+  trademarks or copyrighted music; at least one serverless AWS service, no
+  servers or pipelines; an original, previously unpublished project. One entry
+  per person or team, teams of at most five; people in excluded countries and
+  Amazon employees cannot enter. See the VIDEO CHECKLIST at the end.
+- The rules say nothing about AI use, so the optional AI-assistant line is
+  purely your choice.
+- The draft is written as "I". If you submit as a team, change it to "we".
 - Replace <LIVE_DEMO_URL> and <VIDEO_URL>.
 - PART 2 (the longer article) is optional, e.g. for a Builder Center post; check
   any title prefix, tags and minimum length there before posting it.
 -->
 
 # PART 1: Project description (paste into "Your project")
+
+Two customers in two countries click Buy on the last unit in the same second.
+Only one of them should get it.
 
 ## Title (pick one)
 
@@ -67,43 +75,50 @@ stack costs only a few kilobytes of storage, and one order costs about $0.0003.
 
 ### Why it stands out
 
-- **Technical innovation and originality:** overselling is prevented by a single
+- **The idea:** overselling is prevented by a single
   conditional DynamoDB transaction ("enough left?" and "take it off the shelf"
   happen together), so two stores racing for the last unit cannot both win. A
   version number on every stock change stops a late store update from
   overwriting newer stock, even right after the demo is restocked.
-- **Craft and execution:** verified on the deployed stack: a Germany order for
+- **How reliably it runs:** verified on the deployed stack: a Germany order for
   one mug at €11.99 was converted to $13.25 at the ECB rate and all four stores
   were updated; two stores ordering the last print at once gave one sale and one
   block; 5 keychains ordered with 3 in stock were blocked. 165 automated tests
   run without an AWS account, every function has its own least-privilege IAM
   policy, and "Restock the demo" puts every product back so the demo never stays
   sold out.
-- **Usefulness and impact:** every oversold order is a cancellation that costs
+- **Who it helps:** every oversold order is a cancellation that costs
   the seller money and marketplace rating. The same pattern (one atomic check
   and decrement, then fan out) applies to any shared stock, seat or quota.
-- **Creativity and storytelling:** the page is built around one picture, one
+- **How it is told:** the page is built around one picture, one
   shelf and four stores, and four short demo stories: a customer buys one,
   stock runs low, two customers want the last item, someone orders more than
   we have.
 
 ### Reuse this pattern
 
-The template is one flat file meant to be copied. Four pieces transfer to other
-projects: the conditional "check and decrement" with idempotency in one DynamoDB
-transaction fits seat booking, quotas and coupon redemption; using the business
-id (here the order id) as the Step Functions execution name gives duplicate
-protection for free; catching a business error and routing it to a recorded
-outcome plus a Fail state makes the console graph show exactly why a request
-stopped; and a CloudFormation custom resource that uploads a static site and
-writes its config turns any dashboard into part of a single `sam deploy`.
+The SAM template is one flat file meant to be copied, and the README has a
+"Reuse the pattern" section. Four pieces lift straight into other projects:
+
+- **Atomic check-and-decrement with idempotency:** one conditional DynamoDB
+  transaction ("enough left?" plus "create this order only once") fits seat
+  booking, quotas, coupon redemption or any limited stock.
+- **Execution name = business id:** naming each Step Functions execution after
+  the order id gives duplicate protection for free.
+- **Catch to a recorded outcome:** a business error is caught, written as a
+  "blocked" record, and ends in a Fail state, so the console graph shows exactly
+  where and why a request stopped.
+- **A static site that publishes itself:** a CloudFormation custom resource
+  uploads the dashboard and writes its config during `sam deploy`, so the
+  website needs no separate deploy step.
 
 ### Scope
 
 One flow, end to end: an order comes in, stock is reserved or the order is
 blocked, the price is converted, all four stores are updated, a warning is
 raised if stock is low, and a receipt is saved. Marketplace calls are mock: the
-real Amazon Selling Partner API request is built and shown, but never sent, and
+real Amazon Selling Partner API request is built, and is visible in the
+workflow's output for each store, but never sent, and
 all products and orders are synthetic demo data. There is no connection to or
 endorsement by Amazon.
 
