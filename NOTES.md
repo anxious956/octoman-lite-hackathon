@@ -22,8 +22,8 @@ marketplaces' APIs, live Amazon calls.
 - [x] 6. README, demo script, these notes
 - [x] 7. Credential and real-data scan of the whole folder: clean (only moto's fake
       "testing" credentials and AWS's documented example account id in tests).
-      Pushing still needs an explicit go-ahead.
-- [ ] 8. First real deploy (`sam deploy --guided --profile <your-profile>`), seed, run the demo script once
+- [x] 8. First real deploy (`sam deploy --guided --profile <your-profile>`), seed, run the demo script once:
+      done; see "Verification status".
 
 ## Deploying
 
@@ -33,16 +33,13 @@ plan is to leave the stack running until the winners are announced, with a $5
 monthly AWS Budgets alert in that account (README, "If you leave it running"),
 and to run `sam delete` afterwards.
 
-## After deploying the Amazon version
+## After a deploy that changes seed data
 
-The deployed tables still hold the eBay-era store keys (EBAY_*). The first step
-after `sam deploy` is **Restock the demo** on the dashboard (or
-`python scripts/seed.py --reset`); until then the page shows "Restock the demo to
-start" and orders for those products are refused (422, not listed).
+Press **Restock the demo** on the dashboard once.
 
 ## Verification status
 
-- Local: 91 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
+- Local: 166 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
   local dashboard run against a fake API.
 - State machine: on 2026-11-15 the definition passed the Step Functions
   ValidateStateMachineDefinition API, plus mocked TestState runs for ReserveStock
@@ -51,9 +48,14 @@ start" and orders for those products are refused (422, not listed).
   added, ConvertToUSD (success; function error and timeout both caught with the
   `fallback_error` fx and routed to PushToMarketplaces; FinalizeOrder accepts that
   fx). Nothing was invoked or created.
-- Not verified yet: a full execution on a deployed stack, the CloudFront OAC
-  wiring and the dashboard custom resource in a real deploy, and
-  `sam local invoke` (Docker was not running during the build).
+- Deployed stack (a dedicated non-production account): a sale in Germany was
+  converted to dollars at the ECB rate and all four stores were handled; the
+  last-item race gave one sale and one block; an order for more than the stock
+  was blocked; a low-stock warning was raised; the dashboard was served through
+  CloudFront with its config written by the custom resource.
+- Not verified yet: `sam local invoke` (Docker was not running during the
+  build), and the phone layout on the deployed site (only checked locally at
+  390 px against a fake API).
 
 ## Key decisions (short)
 

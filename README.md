@@ -356,9 +356,10 @@ projects:
   interface OctoMan uses for Amazon, so a live adapter is a drop-in replacement.
   Live mode is intentionally not available here: it needs OAuth tokens per
   seller, which belong in a token store this demo does not include.
-- **Order of steps.** FX conversion runs before the marketplace push, as
-  specified. In production, pushing first would shorten the window in which
-  another store can still sell the item (by up to the FX timeout of 3 s).
+- **Order of steps.** FX conversion runs before the marketplace push. The shelf
+  itself can never oversell, because the reservation is one transaction; the order
+  of the two later steps only affects how long the other stores still show the old
+  number (at most the FX timeout of 3 s longer). Pushing first would shorten that.
 - **The marketplace is the origin of truth for its own sale.** The store that sold
   the item already decremented its listing, so its branch only updates the local
   copy (`status: skipped`).

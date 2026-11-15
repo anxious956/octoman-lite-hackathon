@@ -73,8 +73,14 @@ S3 bucket behind Amazon CloudFront. The architecture diagram is attached
 Every part is a managed serverless service: no instances, no containers, no
 CI/CD. The whole system is one AWS SAM template, deployed with `sam build` and
 `sam deploy`. A CloudFormation custom resource publishes the dashboard during
-the deploy, so there is no separate upload step. It scales to zero: an idle
-stack costs only a few kilobytes of storage, and one order costs about $0.0003.
+the deploy, so there is no separate upload step.
+
+### Cost when idle
+
+It scales to zero: no instances, no provisioned capacity, no fixed monthly fee.
+An idle stack costs nothing beyond a few kilobytes of storage, and one order costs
+about $0.0003, mostly Step Functions state transitions. The README has the
+[cost table](https://github.com/anxious956/octoman-lite-hackathon#cost).
 
 ### Why it stands out
 
@@ -86,7 +92,7 @@ stack costs only a few kilobytes of storage, and one order costs about $0.0003.
 - **How reliably it runs:** verified on the deployed stack: a Germany order for
   one mug at €11.99 was converted to $13.25 at the ECB rate and all four stores
   were updated; two stores ordering the last print at once gave one sale and one
-  block; 5 keychains ordered with 3 in stock were blocked. 165 automated tests
+  block; 5 keychains ordered with 3 in stock were blocked. 166 automated tests
   run without an AWS account, every function has its own least-privilege IAM
   policy, and "Restock the demo" puts every product back so the demo never stays
   sold out.
@@ -124,6 +130,25 @@ real Amazon Selling Partner API request is built, and is visible in the
 workflow's output for each store, but never sent, and
 all products and orders are synthetic demo data. There is no connection to or
 endorsement by Amazon.
+
+### What's next
+
+- A live Amazon adapter behind the same interface the mock uses; it needs a
+  per-seller token store for the Selling Partner API credentials.
+- Sign-in, and each seller's stock and orders kept separate.
+- A hold-then-confirm step, so a cart that is never paid gives its units back.
+
+### Try it yourself
+
+You need an AWS account and the AWS SAM CLI. From the repository folder:
+
+```
+sam build
+sam deploy --guided
+```
+
+Open the `DashboardUrl` output and press **Try the demo**. Remove everything
+with `sam delete`. Full steps: [Deploy it yourself](https://github.com/anxious956/octoman-lite-hackathon#deploy-it-yourself).
 
 ### About this project
 
@@ -246,7 +271,7 @@ worst case at roughly $25 a day.
 - Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
 - Video (under 3 minutes): <VIDEO_URL>
 
-The repository has 165 automated tests that need no AWS account, and a deploy guide.
+The repository has 166 automated tests that need no AWS account, and a deploy guide.
 
 *Optional:* I built this with the help of an AI coding assistant.
 
@@ -294,9 +319,11 @@ CloudFront reads the same API.
 
 - **Under 3 minutes**, showing the build running end to end (`docs/demo_script.md`
   has a 2:30 script).
-- Show, in this order: a sale rippling to all four stores, the last-item race
-  (one sold, one blocked), the red **OversellPrevented** stop in the Step
-  Functions execution graph, then **Restock the demo**.
+- Open with the race, as the first action on a freshly restocked demo:
+  **Two customers, one last item** (one sold, one blocked), then the red
+  **OversellPrevented** stop in the Step Functions execution graph. Then a normal
+  sale in Germany and its graph with the four parallel store branches, then the
+  low-stock warning, and close on "scales to zero, one `sam deploy`".
 - Record in a clean browser window: no bookmarks bar, no other tabs, no
   notifications. **No music.**
 - **No third-party trademarks or sites:** do not show GitHub or any other
