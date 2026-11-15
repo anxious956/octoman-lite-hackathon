@@ -44,6 +44,9 @@ template, no pipeline, scales to zero.
 
 ## Description
 
+Two customers in two countries click Buy on the last unit in the same second.
+Only one of them should get it.
+
 ### The problem I picked and what the build does
 
 When a seller lists the same product on several marketplaces, each one keeps
