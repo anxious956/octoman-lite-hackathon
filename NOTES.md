@@ -39,7 +39,7 @@ Press **Restock the demo** on the dashboard once.
 
 ## Verification status
 
-- Local: 166 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
+- Local: 169 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
   local dashboard run against a fake API.
 - State machine: on 2026-11-15 the definition passed the Step Functions
   ValidateStateMachineDefinition API, plus mocked TestState runs for ReserveStock
@@ -51,14 +51,23 @@ Press **Restock the demo** on the dashboard once.
   (conversion before the push).
 - Step order changed afterwards: the stores are now updated first and the
   conversion runs after them; its catch now routes to IsStockLow. Checked
-  locally only (unit tests, `sam validate --lint`, `sam build`); not yet run
-  through ValidateStateMachineDefinition or on a deployed stack.
-- Deployed stack (made with the previous step order; repeat after the next
-  redeploy): a sale in Germany was converted to dollars at the ECB rate
-  and all four stores were handled; the last-item race gave one sale and one
-  block; an order for more than the stock was blocked; a low-stock warning was
-  raised; the dashboard was served through CloudFront with its config written by
-  the custom resource.
+  locally (unit tests, `sam validate --lint`, `sam build`) and on the redeployed
+  stack (below); not run through ValidateStateMachineDefinition or TestState.
+- Deployed stack, repeated on 2026-11-15 after redeploying with the new step
+  order, through the public dashboard and API only (no AWS console or CLI):
+  - the served dashboard files match the repo (tabs, photos, diagram order);
+  - Restock the demo: 15 products back at seed stock on all four stores;
+  - a sale in Germany completed, converted to dollars at the ECB rate; Germany
+    was skipped (origin) and the US, UK and Türkiye listings were updated; a
+    receipt key was written;
+  - the last-item race (two stores, same moment): one sale, one block, stock 0;
+  - an order for more than the stock was blocked and the stock did not change;
+  - a sale that took a product under its warning level raised one alert.
+  The API does not show the order of the steps. The store updates carry
+  timestamps (about 1 s after the reservation, about 3 s before completion),
+  but the conversion has none, so "stores before conversion" on AWS rests on
+  the definition in this repo, not on these results.
+- Not repeated under the new order: a conversion failure (fallback) on AWS.
 - Not verified yet: `sam local invoke` (Docker was not running during the
   build), and the phone layout on the deployed site (only checked locally at
   390 px against a fake API).
