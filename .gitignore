@@ -19,3 +19,8 @@ venv/
 Thumbs.db
 .idea/
 .vscode/
+
+# Demo video working files (docs/video)
+docs/video/take/
+docs/video/stills/
+docs/video/*.log
