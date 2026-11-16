@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OctoMan Lite video compositor</title>
+<style>
+@font-face { font-family: "Plex"; font-weight: 400; src: url("../../dashboard/assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Plex"; font-weight: 500; src: url("../../dashboard/assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Plex"; font-weight: 600; src: url("../../dashboard/assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "PlexMono"; font-weight: 400; src: url("../../dashboard/assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "PlexMono"; font-weight: 500; src: url("../../dashboard/assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+:root { --navy: #0a1022; --navy2: #14204a; --ink: #eef2fb; --ink2: #aab6d6; --brand: #8ea6ff; --bad: #ff8d80; --ok: #7fd3a0; --warn: #f1b85a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Plex", sans-serif; color: var(--ink);
+  background: radial-gradient(1400px 900px at 50% 38%, #1b2a63 0%, #0f1838 45%, var(--navy) 100%); }
+#stage::before { content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image: radial-gradient(rgba(142,166,255,.16) 1.2px, transparent 1.2px); background-size: 36px 36px; }
+
+/* ── footage ─────────────────────────────────────────── */
+#clip { position: absolute; inset: 0; opacity: 0; }
+#win { position: absolute; left: 80px; top: 26px; width: 1760px; height: 990px; border-radius: 22px; overflow: hidden; background: #f3f5f9;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 30px 80px rgba(0,0,0,.55); }
+#world { position: absolute; left: 0; top: 0; width: 1440px; height: 1000px; transform-origin: 0 0; will-change: transform; }
+#frame { position: absolute; left: 0; top: 0; width: 1440px; height: 1000px; display: block; }
+.ring { position: absolute; border-radius: 12px; border: 3px solid var(--c, #e5484d); box-shadow: 0 0 0 5px color-mix(in srgb, var(--c, #e5484d) 22%, transparent); pointer-events: none; }
+#cur { position: absolute; left: 0; top: 0; width: 26px; height: 26px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.rip { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; border: 3px solid #2f6fe4; background: rgba(47,111,228,.18); }
+#cap { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; justify-content: center; }
+#cap > div { max-width: 1560px; padding: 18px 38px 20px; border-radius: 18px; background: rgba(9,15,36,.94); border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 16px 44px rgba(0,0,0,.5); font-size: 40px; line-height: 1.25; font-weight: 500; letter-spacing: -.005em; text-align: center; white-space: nowrap; }
+#cap b { font-weight: 600; color: var(--brand); }
+#cap b.bad { color: var(--bad); } #cap b.ok { color: var(--ok); } #cap b.warn { color: var(--warn); }
+#cap code { font-family: "PlexMono", monospace; font-weight: 500; font-size: .92em; color: #fff; background: rgba(142,166,255,.2); padding: 2px 12px; border-radius: 8px; }
+#chip { position: absolute; left: 50%; top: 4px; translate: -50% 0; white-space: nowrap; padding: 9px 20px 10px; border-radius: 999px; background: rgba(9,15,36,.92); border: 1px solid rgba(255,255,255,.18);
+  font-size: 24px; font-weight: 600; letter-spacing: .04em; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+#chip span { font-family: "PlexMono", monospace; color: var(--brand); margin-right: 12px; }
+
+/* ── cards ───────────────────────────────────────────── */
+.card { position: absolute; inset: 0; opacity: 0; display: none; }
+.card * { animation-play-state: paused; }
+@keyframes in-up { from { opacity: 0; transform: translateY(46px); } to { opacity: 1; transform: none; } }
+@keyframes in-pop { 0% { opacity: 0; transform: scale(.7); } 60% { opacity: 1; transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes out { to { opacity: 0; } }
+@keyframes dim { to { opacity: .16; } }
+.a { animation: in-up .7s cubic-bezier(.2,.75,.2,1) var(--in, 0s) both, out .45s ease var(--out, 999s) forwards; }
+.pop { animation: in-pop .8s cubic-bezier(.2,.75,.2,1) var(--in, 0s) both, out .45s ease var(--out, 999s) forwards; }
+.center { position: absolute; left: 0; right: 0; text-align: center; }
+h1 { margin: 0; font-weight: 600; letter-spacing: -.025em; line-height: 1.04; }
+.eyebrow { font-family: "PlexMono", monospace; font-weight: 500; font-size: 26px; letter-spacing: .22em; text-transform: uppercase; color: var(--brand); }
+
+/* hook */
+#hook .tile { position: absolute; left: 810px; top: 215px; width: 300px; height: 300px; border-radius: 34px; overflow: hidden; background: #fff;
+  box-shadow: 0 0 0 6px rgba(255,255,255,.95), 0 30px 70px rgba(0,0,0,.55); }
+#hook .tilewrap { animation: out .5s ease 6.8s forwards; }
+#hook .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#hook .badge { position: absolute; left: 0; right: 0; top: 548px; text-align: center; }
+#hook .badge span { display: inline-block; padding: 10px 26px 12px; border-radius: 999px; background: #fbefd9; color: #8f5200; font-family: "PlexMono", monospace; font-weight: 500; font-size: 30px; }
+#hook .buyer { position: absolute; width: 440px; padding: 22px 24px; border-radius: 22px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; gap: 18px; font-size: 30px; font-weight: 500; white-space: nowrap; }
+#hook .buyer img { width: 64px; height: 48px; border-radius: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,.3); }
+#hook .buyer .buy { margin-left: auto; padding: 9px 22px 11px; border-radius: 12px; background: #ffb340; color: #111a2e; font-weight: 600; font-size: 28px; }
+@keyframes from-l { from { opacity: 0; transform: translateX(-260px); } to { opacity: 1; transform: none; } }
+@keyframes from-r { from { opacity: 0; transform: translateX(260px); } to { opacity: 1; transform: none; } }
+@keyframes press { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,179,64,.9); } 30% { transform: scale(.86); } 100% { transform: scale(1); box-shadow: 0 0 0 46px rgba(255,179,64,0); } }
+@keyframes wire { from { transform: scaleX(0); opacity: 1; } to { transform: scaleX(1); opacity: 1; } }
+#hook .l { animation: from-l .7s cubic-bezier(.2,.75,.2,1) var(--in) both, out .5s ease 6.8s forwards; }
+#hook .r { animation: from-r .7s cubic-bezier(.2,.75,.2,1) var(--in) both, out .5s ease 6.8s forwards; }
+#hook .buy.go { animation: press .7s ease-out 4.9s both; }
+#hook .wire { position: absolute; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #ffb340, #fff); opacity: 0; animation: wire .32s ease-out 5.0s forwards, out .5s ease 6.6s forwards; }
+#hook .wl { left: 676px; top: 312px; width: 124px; transform-origin: left center; }
+#hook .wr { left: 1120px; top: 442px; width: 124px; transform-origin: right center; background: linear-gradient(270deg, #ffb340, #fff); }
+#hook .line { top: 690px; font-size: 104px; }
+#hook .sub { top: 830px; font-size: 46px; color: var(--ink2); font-weight: 500; }
+#hook .big { top: 420px; font-size: 200px; }
+
+/* logo */
+#logo .mark { position: absolute; left: 870px; top: 210px; width: 180px; height: 180px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+#logo .mark img { width: 132px; height: 132px; }
+#logo .name { top: 430px; font-size: 136px; }
+#logo .tag { top: 620px; font-size: 58px; font-weight: 500; letter-spacing: -.01em; }
+#logo .tag b { color: var(--brand); font-weight: 600; }
+#logo .eyebrow { top: 760px; }
+
+/* cta */
+#cta .mark { position: absolute; left: 900px; top: 96px; width: 120px; height: 120px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 18px 44px rgba(0,0,0,.5); }
+#cta .mark img { width: 88px; height: 88px; }
+#cta .eyebrow { top: 262px; }
+#cta .head { top: 318px; font-size: 112px; }
+#cta .url { top: 500px; }
+#cta .url span { display: inline-block; padding: 26px 54px 30px; border-radius: 26px; background: #fff; color: #0d1b3e; font-family: "PlexMono", monospace; font-weight: 500; font-size: 68px; letter-spacing: -.01em;
+  box-shadow: 0 0 0 8px rgba(142,166,255,.35), 0 30px 70px rgba(0,0,0,.5); }
+#cta .svc { top: 720px; font-size: 36px; color: var(--ink2); font-weight: 500; }
+#cta .svc i { font-style: normal; color: var(--brand); margin: 0 12px; }
+#cta .foot { top: 810px; font-size: 44px; font-weight: 500; }
+#cta .foot code { font-family: "PlexMono", monospace; font-size: .9em; background: rgba(142,166,255,.2); padding: 3px 16px 5px; border-radius: 10px; }
+#cta .name { top: 930px; font-size: 30px; color: var(--ink2); letter-spacing: .02em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="clip">
+    <div id="win"><div id="world"><img id="frame" alt=""><div id="rings"></div><div id="rips"></div><div id="cur"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M4 2 L4 19.5 L8.6 15.4 L11.6 22 L14.4 20.8 L11.5 14.3 L18 14.3 Z" fill="#111a2e" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div>
+    <div id="chip"></div>
+    <div id="cap"><div></div></div>
+  </div>
+
+  <section class="card" id="hook">
+    <div class="tilewrap"><div class="tile pop" style="--in:.25s"><img src="../../dashboard/assets/img/products/octo-print-006.webp" alt=""></div></div>
+    <div class="badge"><div class="tilewrap"><span class="a" style="--in:.9s">1 unit left</span></div></div>
+    <h1 class="center line a" style="--in:.7s; --out:2.9s">One item left.</h1>
+
+    <div class="buyer l" style="left:230px; top:262px; --in:3.2s"><img src="../../dashboard/assets/img/flags/us.svg" alt="">United States<span class="buy go">Buy</span></div>
+    <div class="buyer l" style="left:230px; top:392px; --in:3.4s"><img src="../../dashboard/assets/img/flags/gb.svg" alt="">United Kingdom<span class="buy">Buy</span></div>
+    <div class="buyer r" style="left:1250px; top:262px; --in:3.3s"><img src="../../dashboard/assets/img/flags/de.svg" alt="">Germany<span class="buy">Buy</span></div>
+    <div class="buyer r" style="left:1250px; top:392px; --in:3.5s"><img src="../../dashboard/assets/img/flags/tr.svg" alt="">Türkiye<span class="buy go">Buy</span></div>
+    <div class="wire wl"></div><div class="wire wr"></div>
+    <h1 class="center line a" style="--in:3.3s; --out:6.7s">Two countries click Buy.</h1>
+    <div class="center sub a" style="--in:4.7s; --out:6.7s">In the very same second.</div>
+
+    <h1 class="center big pop" style="--in:7.1s">Who gets it?</h1>
+  </section>
+
+  <section class="card" id="logo">
+    <div class="mark pop" style="--in:.15s"><img src="../../dashboard/assets/img/logo.png" alt=""></div>
+    <h1 class="center name a" style="--in:.4s">OctoMan Lite</h1>
+    <div class="center tag a" style="--in:1.0s">One shelf. Four stores. <b>Zero oversells.</b></div>
+    <div class="center eyebrow a" style="--in:1.6s">Serverless on AWS · live demo</div>
+  </section>
+
+  <section class="card" id="cta">
+    <div class="mark pop" style="--in:.1s"><img src="../../dashboard/assets/img/logo.png" alt=""></div>
+    <div class="center eyebrow a" style="--in:.4s">The demo is live</div>
+    <h1 class="center head a" style="--in:.55s">Try it yourself</h1>
+    <div class="center url pop" style="--in:1.1s"><span>d3gwyk02074rrp.cloudfront.net</span></div>
+    <div class="center svc a" style="--in:1.9s">Lambda<i>·</i>Step Functions<i>·</i>DynamoDB<i>·</i>API Gateway<i>·</i>S3<i>·</i>CloudFront</div>
+    <div class="center foot a" style="--in:2.5s">No servers. No pipeline. One <code>sam deploy</code>.</div>
+    <div class="center name a" style="--in:3.1s">OctoMan Lite · link in the description</div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const WIN_W = 1760, WIN_H = 990;
+let TAKE = null, SHOTS = [], TOTAL = 0;
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+const easeOut = (u) => 1 - Math.pow(1 - u, 3);
+
+function init(take, shots) {
+  TAKE = take; SHOTS = shots;
+  $('world').style.height = take.vh + 'px'; $('frame').style.height = take.vh + 'px';
+  let t = 0;
+  for (const s of SHOTS) { s.t0 = t; t += s.dur; }
+  TOTAL = t;
+  return TOTAL;
+}
+
+/** Piecewise-linear lookup over [[t, v], ...]. */
+function lerpTable(tab, t) {
+  if (t <= tab[0][0]) return tab[0][1];
+  for (let i = 1; i < tab.length; i++) {
+    if (t <= tab[i][0]) { const [a, va] = tab[i - 1], [b, vb] = tab[i]; return b === a ? vb : va + (vb - va) * (t - a) / (b - a); }
+  }
+  return tab[tab.length - 1][1];
+}
+
+/** Camera keyframes [[t, x, y, w], ...], eased between keys. */
+function camAt(keys, t) {
+  if (t <= keys[0][0]) return keys[0].slice(1);
+  for (let i = 1; i < keys.length; i++) {
+    if (t <= keys[i][0]) {
+      const a = keys[i - 1], b = keys[i];
+      const u = b[0] === a[0] ? 1 : ease((t - a[0]) / (b[0] - a[0]));
+      return [1, 2, 3].map((k) => a[k] + (b[k] - a[k]) * u);
+    }
+  }
+  return keys[keys.length - 1].slice(1);
+}
+
+function frameFor(ts) {
+  const f = TAKE.frames; let lo = 0, hi = f.length - 1;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (f[mid][0] <= ts) lo = mid; else hi = mid - 1; }
+  return f[lo][1];
+}
+
+function edgeFade(s, tl) {
+  let o = 1;
+  if (s.fadeIn) o = Math.min(o, tl / s.fadeIn);
+  if (s.fadeOut) o = Math.min(o, (s.dur - tl) / s.fadeOut);
+  return clamp(o, 0, 1);
+}
+
+let lastSrc = "";
+async function seek(t) {
+  t = clamp(t, 0, TOTAL - 1e-6);
+  const s = SHOTS.find((x) => t >= x.t0 && t < x.t0 + x.dur) || SHOTS[SHOTS.length - 1];
+  const tl = t - s.t0;
+  for (const c of document.querySelectorAll(".card")) { c.style.display = "none"; c.style.opacity = 0; }
+  $("clip").style.opacity = 0;
+
+  if (s.kind === "card") {
+    const c = $(s.id);
+    c.style.display = "block";
+    c.style.opacity = edgeFade(s, tl);
+    for (const a of c.getAnimations({ subtree: true })) { a.pause(); a.currentTime = tl * 1000; }
+    return;
+  }
+
+  // footage
+  const ts = lerpTable(s.time, tl);
+  const src = "take/frames/" + frameFor(ts);
+  const img = $("frame");
+  if (src !== lastSrc) { img.src = src; lastSrc = src; await img.decode(); }
+  const [x, y, w] = camAt(s.cam, tl);
+  const k = WIN_W / w;
+  $("world").style.transform = `translate(${WIN_W / 2 - x * k}px, ${WIN_H / 2 - y * k}px) scale(${k})`;
+  $("clip").style.opacity = edgeFade(s, tl);
+
+  // cursor and click ripples, drawn from the logged mouse path so they move at the output frame rate
+  const mp = TAKE.mouse; let mi = 0;
+  { let lo = 0, hi = mp.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (mp[mid][0] <= ts) lo = mid; else hi = mid - 1; } mi = lo; }
+  let cx = mp[mi][1], cy = mp[mi][2];
+  if (ts > mp[mi][0] && mi + 1 < mp.length && mp[mi + 1][0] - mp[mi][0] < 0.2) { const u = (ts - mp[mi][0]) / (mp[mi + 1][0] - mp[mi][0]); cx += (mp[mi + 1][1] - cx) * u; cy += (mp[mi + 1][2] - cy) * u; }
+  $("cur").style.transform = `translate(${cx - 4}px, ${cy - 2}px)`;
+  const rips = $("rips"); rips.textContent = "";
+  for (const ct of TAKE.clicks) {
+    const u = (ts - ct) / 0.52;
+    if (u < 0 || u >= 1) continue;
+    const d = document.createElement("div"); d.className = "rip";
+    d.style.cssText = `left:${cx}px; top:${cy}px; transform:scale(${0.2 + 0.95 * easeOut(u)}); opacity:${1 - u}`;
+    rips.appendChild(d);
+  }
+
+  // caption
+  const cap = $("cap").firstElementChild;
+  const c = (s.caps || []).find((q) => tl >= q[0] && tl < q[1]);
+  if (c) {
+    const a = clamp((tl - c[0]) / 0.3, 0, 1), b = clamp((c[1] - tl) / 0.22, 0, 1);
+    if (cap.dataset.h !== c[2]) { cap.innerHTML = c[2]; cap.dataset.h = c[2]; }
+    cap.style.opacity = Math.min(easeOut(a), b);
+    cap.style.transform = `translateY(${(1 - easeOut(a)) * 22}px)`;
+    cap.style.visibility = "visible";
+  } else { cap.style.visibility = "hidden"; }
+
+  // section chip
+  const chip = $("chip");
+  if (s.chip) {
+    const a = clamp((tl - 0.3) / 0.4, 0, 1), b = clamp((s.chip[2] - tl) / 0.4, 0, 1);
+    chip.innerHTML = `<span>${s.chip[0]}</span>${s.chip[1]}`;
+    chip.style.opacity = Math.min(a, b);
+  } else chip.style.opacity = 0;
+
+  // rings (in page coordinates, so they follow the camera)
+  const rings = $("rings");
+  rings.textContent = "";
+  for (const r of s.rings || []) {
+    if (tl < r[0] || tl >= r[1]) continue;
+    const a = clamp((tl - r[0]) / 0.3, 0, 1), b = clamp((r[1] - tl) / 0.3, 0, 1);
+    const d = document.createElement("div");
+    d.className = "ring";
+    const grow = (1 - easeOut(a)) * 14;
+    d.style.cssText = `left:${r[2] - grow}px; top:${r[3] - grow}px; width:${r[4] + 2 * grow}px; height:${r[5] + 2 * grow}px; opacity:${Math.min(a, b)}; --c:${r[6] || "#e5484d"}`;
+    rings.appendChild(d);
+  }
+}
+</script>
+</body>
+</html>

@@ -15,7 +15,6 @@ NOTE FOR THE AUTHOR (delete this block before posting):
 - The rules say nothing about AI use, so the optional AI-assistant line is
   purely your choice.
 - The draft is written as "I". If you submit as a team, change it to "we".
-- Replace <LIVE_DEMO_URL> and <VIDEO_URL>.
 - PART 2 (the longer article) is optional, e.g. for a Builder Center post; check
   any title prefix, tags and minimum length there before posting it.
 -->
@@ -158,9 +157,9 @@ standalone, scaled-down take on my own private OctoMan inventory system; a few
 modules (currency conversion, the marketplace adapter interface, the DynamoDB
 helpers) were adapted from it.
 
-- Live demo: <LIVE_DEMO_URL>
+- Live demo: https://d3gwyk02074rrp.cloudfront.net/
 - Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
-- Video: <VIDEO_URL>
+- Video: https://www.youtube.com/watch?v=78qrqikMN-U
 - *Optional:* I built this with the help of an AI coding assistant.
 
 ---
@@ -272,9 +271,9 @@ worst case at roughly $25 a day.
 
 ### Try it
 
-- Live demo: <LIVE_DEMO_URL> (open "Try the demo" in the bottom-right corner)
+- Live demo: https://d3gwyk02074rrp.cloudfront.net/ (open "Try the demo" in the bottom-right corner)
 - Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
-- Video (under 3 minutes): <VIDEO_URL>
+- Video (under 3 minutes): https://www.youtube.com/watch?v=78qrqikMN-U
 
 The repository has 166 automated tests that need no AWS account, and a deploy guide.
 
@@ -340,5 +339,4 @@ CloudFront reads the same API.
   flag and icon sets (IBM Plex, flag-icons, Lucide). In the **How it works**
   tab, show the diagram and the step-to-service table, not the credits.
 - Upload it as **public** on YouTube, Vimeo, Facebook Video or Youku.
-- Paste the link into the project's **"demo"** field, and replace `<VIDEO_URL>`
-  above.
+- Paste the link into the project's **"demo"** field: https://www.youtube.com/watch?v=78qrqikMN-U
