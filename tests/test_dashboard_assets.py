@@ -110,6 +110,19 @@ def test_three_tabs_with_matching_panels():
         assert ('aria-selected="true"' in tab) == (name == "live")
 
 
+def test_no_element_id_equals_a_tab_hash():
+    # The tabs live in the URL hash (#live, #products, #how). An element with the
+    # same id would make the browser scroll to it when the page loads at that hash.
+    derive = (ASSETS / "derive.js").read_text(encoding="utf-8")
+    tabs = re.findall(r'"([a-z]+)"', re.search(r"export const TABS = \[([^\]]*)\]", derive).group(1))
+    assert tabs == ["live", "products", "how"]
+    html = (DASHBOARD / "index.html").read_text(encoding="utf-8")
+    js = (ASSETS / "app.js").read_text(encoding="utf-8")
+    ids = re.findall(r'\bid="([^"]+)"', html) + re.findall(r'\bid: "([^"]+)"', js)
+    assert ids, "no ids found: the pattern is out of date"
+    assert not set(ids) & set(tabs), set(ids) & set(tabs)
+
+
 def test_how_it_works_is_a_tab_not_a_collapsed_section():
     html = (DASHBOARD / "index.html").read_text(encoding="utf-8")
     assert "<details" not in html and "how-open" not in html

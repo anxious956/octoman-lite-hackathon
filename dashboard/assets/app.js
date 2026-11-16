@@ -240,7 +240,7 @@ function isBusy() {
 
 // ── render: header ──────────────────────────────────────────────────
 function renderLive(polling) {
-  const live = $("live");
+  const live = $("live-status");
   if (state.error) {
     live.dataset.state = "error";
     setText($("live-text"), "Offline");
@@ -536,7 +536,7 @@ function renderRowButtons(sku) {
 }
 
 function renderProducts(maxUnits) {
-  const list = $("products");
+  const list = $("product-list");
   if (!state.loaded) return;
   list.removeAttribute("aria-busy");
   for (const s of list.querySelectorAll(".skeleton")) s.remove();
