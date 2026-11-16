@@ -39,7 +39,7 @@ Press **Restock the demo** on the dashboard once.
 
 ## Verification status
 
-- Local: 169 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
+- Local: 170 pytest tests (moto, no AWS), `sam validate --lint`, `sam build`, and a
   local dashboard run against a fake API.
 - State machine: on 2026-11-15 the definition passed the Step Functions
   ValidateStateMachineDefinition API, plus mocked TestState runs for ReserveStock

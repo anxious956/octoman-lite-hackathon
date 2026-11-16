@@ -92,7 +92,7 @@ about $0.0003, mostly Step Functions state transitions. The README has the
 - **How reliably it runs:** verified on the deployed stack: a Germany order for
   one mug at €11.99 was converted to $13.25 at the ECB rate and all four stores
   were updated; two stores ordering the last print at once gave one sale and one
-  block; 5 keychains ordered with 3 in stock were blocked. 166 automated tests
+  block; 5 keychains ordered with 3 in stock were blocked. 170 automated tests
   run without an AWS account, every function has its own least-privilege IAM
   policy, and "Restock the demo" puts every product back so the demo never stays
   sold out.
@@ -283,7 +283,7 @@ worst case at roughly $25 a day.
 - Source and setup guide: https://github.com/anxious956/octoman-lite-hackathon
 - Video (under 3 minutes): https://www.youtube.com/watch?v=78qrqikMN-U
 
-The repository has 166 automated tests that need no AWS account, and a deploy guide.
+The repository has 170 automated tests that need no AWS account, and a deploy guide.
 
 *Optional:* I built this with the help of an AI coding assistant.
 
