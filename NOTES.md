@@ -33,6 +33,9 @@ Advice for anyone deploying this: use a dedicated, non-production account
 winners are announced, with a $5 monthly AWS Budgets alert (README, "If you
 leave it running"), and to run `sam delete` afterwards.
 
+The README carries the live demo link and the video link by the author's choice.
+The region, account and API host are still kept out of the repo.
+
 ## After a deploy that changes seed data
 
 Press **Restock the demo** on the dashboard once.

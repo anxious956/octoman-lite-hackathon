@@ -1,5 +1,7 @@
 # OctoMan Lite: 2.5 minute demo script
 
+> The published video is the scripted one in `docs/video/` (1:26); this 2:30 script is the manual alternative.
+
 Target length 2:30 (hard limit 3:00). Two windows side by side: the **dashboard**
 (`DashboardUrl` output) on the left, the **Step Functions console** on the right
 (state machine `octoman-lite-order-flow`, **Executions** tab).

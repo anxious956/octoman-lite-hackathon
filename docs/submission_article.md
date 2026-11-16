@@ -90,9 +90,10 @@ about $0.0003, mostly Step Functions state transitions. The README has the
   version number on every stock change stops a late store update from
   overwriting newer stock, even right after the demo is restocked.
 - **How reliably it runs:** verified on the deployed stack: a Germany order for
-  one mug at €11.99 was converted to $13.25 at the ECB rate and all four stores
-  were updated; two stores ordering the last print at once gave one sale and one
-  block; 5 keychains ordered with 3 in stock were blocked. 170 automated tests
+  one sticker pack at €4.99 was converted to $5.51 at the ECB rate, the three
+  other stores were updated and Germany was skipped as the origin; two stores
+  ordering the last print at once gave one sale and one block; 5 keychains
+  ordered with 3 in stock were blocked. 170 automated tests
   run without an AWS account, every function has its own least-privilege IAM
   policy, and "Restock the demo" puts every product back so the demo never stays
   sold out.
@@ -240,10 +241,12 @@ condition fails, the workflow records the order as blocked and ends in a red
 `OversellPrevented` state, so the execution graph shows exactly where it was
 stopped.
 
-On the deployed stack: a Germany order for one mug at €11.99 was converted to
-$13.25 at the ECB rate, and all four stores were updated after each sale. When
-two stores ordered the last print at the same moment, one was sold and one was
-blocked. An order for five keychains with three in stock was blocked.
+On the deployed stack: a Germany order for one sticker pack at €4.99 was
+converted to $5.51 at the ECB rate; the three other stores were updated and
+Germany was skipped, because Amazon had already taken that sale off its own
+count. When two stores ordered the last print at the same moment, one was sold
+and one was blocked. An order for five keychains with three in stock was
+blocked.
 
 ### No pipeline
 
@@ -331,22 +334,22 @@ CloudFront reads the same API.
 
 # Video checklist (for the "demo" field)
 
-- **Under 3 minutes**, showing the build running end to end (`docs/demo_script.md`
-  has a 2:30 script).
-- Open with the race, as the first action on a freshly restocked demo:
-  **Two customers, one last item** (one sold, one blocked), then the red
-  **OversellPrevented** stop in the Step Functions execution graph. Then a normal
-  sale in Germany and its graph with the four parallel store branches, then the
-  low-stock warning, and close on "scales to zero, one `sam deploy`".
-- Record in a clean browser window: no bookmarks bar, no other tabs, no
-  notifications. **No music.**
-- **No third-party trademarks or sites:** do not show GitHub or any other
-  third-party site or logo. Note for your decision: the dashboard itself shows
-  the word "Amazon" and the store domains (amazon.com, .co.uk, .de, .com.tr) as
-  plain text. The challenge is run by AWS, but check whether that counts as a
-  "third party trademark" under the Terms; if in doubt, ask before recording.
-- **Don't scroll to the page footer** while recording: it names the font,
-  flag and icon sets (IBM Plex, flag-icons, Lucide). In the **How it works**
-  tab, show the diagram and the step-to-service table, not the credits.
+The published video is `docs/video/octoman-lite-demo.mp4` (how it was made:
+`docs/video/README.md`). `docs/demo_script.md` is a manual 2:30 alternative.
+
+- **1:26**, under the 3-minute limit, showing the build running end to end.
+- A scripted capture of the live dashboard on the deployed stack, with title
+  cards and captions added afterwards: the race on a freshly restocked demo
+  (**Two customers, one last item**: one sold, one blocked), a sale in Germany
+  updating the other stores, the low-stock warning, and the **How it works**
+  tab with the diagram.
+- **Music:** "Bubbles (Lofi, Bright, Relaxed)" by HoliznaCC0, CC0 1.0 Universal
+  (public domain); source link in `docs/video/README.md`.
+- **No third-party sites:** no GitHub or other third-party site or logo is
+  shown, and the page footer (font, flag and icon credits) is hidden in the
+  recording. Note for your decision: the dashboard itself shows the word
+  "Amazon" and the store domains (amazon.com, .co.uk, .de, .com.tr) as plain
+  text. The challenge is run by AWS, but check whether that counts as a "third
+  party trademark" under the Terms; if in doubt, ask.
 - Upload it as **public** on YouTube, Vimeo, Facebook Video or Youku.
 - Paste the link into the project's **"demo"** field: https://www.youtube.com/watch?v=78qrqikMN-U
