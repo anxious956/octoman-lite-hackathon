@@ -63,10 +63,12 @@ Press **Restock the demo** on the dashboard once.
   - the last-item race (two stores, same moment): one sale, one block, stock 0;
   - an order for more than the stock was blocked and the stock did not change;
   - a sale that took a product under its warning level raised one alert.
-  The API does not show the order of the steps. The store updates carry
-  timestamps (about 1 s after the reservation, about 3 s before completion),
-  but the conversion has none, so "stores before conversion" on AWS rests on
-  the definition in this repo, not on these results.
+  The API does not show the order of the steps; the Step Functions console
+  does. The console graph of a sold execution on the redeployed stack shows
+  PushToMarketplaces and its four branches succeeded before ConvertToUSD
+  (`docs/execution-sold.png`). A blocked execution shows that only
+  ReserveStock (caught error), RecordRejection and OversellPrevented ran
+  (`docs/execution-blocked.png`).
 - Not repeated under the new order: a conversion failure (fallback) on AWS.
 - Not verified yet: `sam local invoke` (Docker was not running during the
   build), and the phone layout on the deployed site (only checked locally at

@@ -222,6 +222,14 @@ the demo" puts every product back. All products and orders are made-up data.
 6. **Save receipt:** a Lambda function stores a receipt JSON in S3 and marks
    the order as sold.
 
+![Step Functions graph of a sold order: ReserveStock, PushToMarketplaces with its four store branches, ConvertToUSD, IsStockLow and FinalizeOrder all succeeded](execution-sold.png)
+
+A sale in Germany. The shelf is checked, all four Amazon stores are updated in parallel, then the price is converted to dollars and the receipt is saved.
+
+![Step Functions graph of a blocked order: ReserveStock caught an error, RecordRejection succeeded, OversellPrevented failed, every other step did not run](execution-blocked.png)
+
+Two customers, one last item. The second order is caught at the shelf check, recorded and stopped. No store was touched.
+
 ### Why it cannot oversell
 
 "Is there enough?" and "take it off the shelf" happen in a single conditional
@@ -316,7 +324,9 @@ CloudFront reads the same API.
 2. A blocked order: the step strip stopped at "Check the shelf" in red with
    "Nobody was oversold", and the red-edged entry in Live orders.
 3. The Step Functions execution graph of a sale, with the four parallel
-   "Push Amazon" branches, and of a blocked order ending in `OversellPrevented`.
+   "Push Amazon" branches, and of a blocked order ending in `OversellPrevented`:
+   `docs/execution-sold.png` and `docs/execution-blocked.png` (ready; the
+   article above uses them under "How it works").
 4. The How it works tab with the diagram and the step-to-AWS-service table.
 
 # Video checklist (for the "demo" field)

@@ -44,6 +44,12 @@ Inlined as an SVG sprite in `index.html` (`<symbol id="i-...">`): `shopping-bag`
 | `img/logo.png` | The OctoMan octopus mascot, owned by the OctoMan project author; cropped and resized from the OctoMan brand artwork |
 | `img/favicon.png` | Same mascot at 48 px, used as the browser tab icon |
 
+## Execution screenshots (docs only)
+
+`docs/execution-sold.png` and `docs/execution-blocked.png` (used in the README, not on
+this page) are the author's own screenshots of the AWS Step Functions console graph view
+for two executions on the deployed demo stack.
+
 ## AWS service icons
 
 Used in the architecture diagram under "Technical details", from the official

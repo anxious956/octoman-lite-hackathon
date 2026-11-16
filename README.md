@@ -150,6 +150,18 @@ task, the order already exists and stock is not decremented again.
 `stock_version` lets each marketplace push ignore a stale quantity that arrives
 after a newer one.
 
+### On AWS: two real executions
+
+![Step Functions graph of a sold order: ReserveStock, PushToMarketplaces with its four store branches, ConvertToUSD, IsStockLow and FinalizeOrder all succeeded](docs/execution-sold.png)
+
+A sale in Germany. The shelf is checked, all four Amazon stores are updated in parallel, then the price is converted to dollars and the receipt is saved.
+
+![Step Functions graph of a blocked order: ReserveStock caught an error, RecordRejection succeeded, OversellPrevented failed, every other step did not run](docs/execution-blocked.png)
+
+Two customers, one last item. The second order is caught at the shelf check, recorded and stopped. No store was touched.
+
+<sub>Screenshots of the Step Functions console graph view for two executions on the deployed stack. Green = succeeded, amber = caught error, red = failed, dashed = did not run.</sub>
+
 ## Deploy it yourself
 
 **Prerequisites:** an AWS account, [AWS CLI](https://aws.amazon.com/cli/) with
