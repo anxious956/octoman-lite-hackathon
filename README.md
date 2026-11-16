@@ -6,6 +6,9 @@ is reserved atomically, the new stock level is pushed to every other Amazon stor
 in parallel, the total is converted to USD with ECB reference rates, a low-stock
 alert is raised when needed, and a receipt is saved to S3.
 
+- **Live demo:** https://d3gwyk02074rrp.cloudfront.net/ (open "Try the demo" in the bottom-right corner)
+- **Video (1:26):** https://www.youtube.com/watch?v=78qrqikMN-U
+
 No servers, no CI/CD pipeline. Deployment is `sam build && sam deploy --guided`.
 
 ---
